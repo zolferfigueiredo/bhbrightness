@@ -1,11 +1,12 @@
 #!/bin/sh
-# One-time setup: xcrun notarytool store-credentials bihan --apple-id <apple-id> --team-id 497V6MCDS8
+# One-time setup: xcrun notarytool store-credentials bihan --key <AuthKey.p8> --key-id <id> --issuer <issuer-id>
 set -eu
 cd "$(dirname "$0")"
 NAME=BiHanBrightness
 VERSION=${1:?usage: ./release.sh <version>}
-APP="dist/$NAME.app"
-ZIP="dist/$NAME-$VERSION.zip"
+ID="Developer ID Application: Zolfer Figueiredo (497V6MCDS8)"
+APP="dist/dmg/$NAME.app"
+DMG="dist/$NAME-$VERSION.dmg"
 
 rm -rf dist
 mkdir -p "$APP/Contents/MacOS"
@@ -31,13 +32,12 @@ cat > "$APP/Contents/Info.plist" <<EOF
 </dict></plist>
 EOF
 # Notarization requires the hardened runtime and a secure timestamp.
-codesign --force --options runtime --timestamp --sign "Developer ID Application: Zolfer Figueiredo (497V6MCDS8)" "$APP"
+codesign --force --options runtime --timestamp --sign "$ID" "$APP"
 
-ditto -c -k --keepParent "$APP" "$ZIP"
-xcrun notarytool submit "$ZIP" --keychain-profile bihan --wait
-# Stapling lets Gatekeeper pass the app offline; the zip must be rebuilt to carry the ticket.
-xcrun stapler staple "$APP"
-rm "$ZIP"
-ditto -c -k --keepParent "$APP" "$ZIP"
-spctl --assess --type execute -vv "$APP"
-echo "Release ready: $ZIP"
+ln -s /Applications dist/dmg/Applications
+hdiutil create -volname "$NAME" -srcfolder dist/dmg -format UDZO "$DMG"
+codesign --timestamp --sign "$ID" "$DMG"
+xcrun notarytool submit "$DMG" --keychain-profile bihan --wait
+xcrun stapler staple "$DMG"
+spctl --assess --type open --context context:primary-signature -vv "$DMG"
+echo "Release ready: $DMG"
