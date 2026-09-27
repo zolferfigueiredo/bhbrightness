@@ -8,7 +8,7 @@ APP="/Applications/$NAME.app"
 swiftc -O -swift-version 5 main.swift -o "$NAME"
 ./"$NAME" --selftest
 
-pkill -x "$NAME" && sleep 1 || true
+if pkill -x "$NAME"; then sleep 1; fi
 mkdir -p "$APP/Contents/MacOS"
 mv "$NAME" "$APP/Contents/MacOS/"
 cat > "$APP/Contents/Info.plist" <<EOF
