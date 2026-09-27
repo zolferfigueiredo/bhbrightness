@@ -2,7 +2,7 @@
 set -eu
 cd "$(dirname "$0")"
 NAME=BiHanBrightness
-VERSION=1.0.0
+VERSION=1.0.1
 APP="/Applications/$NAME.app"
 
 swiftc -O -swift-version 5 main.swift -o "$NAME"
@@ -34,5 +34,14 @@ cat > "$APP/Contents/Info.plist" <<EOF
 EOF
 # A certificate identity (not ad-hoc) keeps the Accessibility grant across rebuilds.
 codesign --force --sign "Apple Development" "$APP"
+
+# -dev: developer-signed and not notarized, and kept apart from release.sh's DMG.
+STAGE=$(mktemp -d)
+cp -R "$APP" "$STAGE/"
+ln -s /Applications "$STAGE/Applications"
+mkdir -p dist
+hdiutil create -volname "$NAME" -srcfolder "$STAGE" -format UDZO -ov "dist/$NAME-$VERSION-dev.dmg" >/dev/null
+rm -rf "$STAGE"
+
 # Launch through LaunchServices: running the bare binary makes TCC attribute it to Terminal.
 open "$APP"

@@ -6,12 +6,12 @@ A tiny macOS menu bar app that takes your MacBook's built-in display below zero,
 
 ## Sub-zero dimming
 
-macOS stops at its lowest brightness step, the first segment of the brightness HUD. Sub-zero dimming picks up from there.
+macOS stops at its lowest brightness step, the first segment of its brightness indicator. Sub-zero dimming picks up from there.
 
-- Above the lowest step, F1 and F2 (brightness down and up) work exactly as usual.
-- At the lowest step, press F1 again to enter sub-zero dimming: 16 extra steps, each darker than the last, with its own HUD bar that empties as the screen darkens.
-- Holding F1 stops at the lowest step. Going sub-zero takes a fresh press, so you never slide into it by accident.
-- F2 walks back out one step at a time, then keeps climbing the normal brightness scale.
+- Above the lowest step, F1 and F2 (brightness down and up) work exactly as usual, with macOS's own indicator (the system HUD).
+- At the lowest step, F1 enters sub-zero dimming: 16 extra steps, each darker than the last. They show on the BiHan HUD, a brightness square with the ninja, whose bar empties as the screen darkens.
+- Holding F1 goes all the way down in one hold: macOS's steps first, then straight on into sub-zero.
+- F2 walks back out one step at a time. Held, it hands over to macOS at the lowest step and keeps climbing under the system HUD.
 - Brightness keys pressed with Shift, Control, Option or Command are left to macOS.
 - Raising the brightness any other way (Control Center, System Settings) leaves sub-zero dimming on its own.
 - Quitting restores the normal screen.
@@ -20,7 +20,7 @@ macOS stops at its lowest brightness step, the first segment of the brightness H
 
 - The backlight is held at the lowest lit step while the display's gamma table dims the picture further.
 - macOS resets gamma after sleep and display changes, so BiHan checks every second and puts it back.
-- The native brightness HUD is reused, so sub-zero dimming looks like part of the system.
+- The BiHan HUD is drawn to the measurements of macOS's classic brightness square, so sub-zero dimming still looks like part of the system.
 - Only the built-in display is touched. External monitors are left alone.
 - The backlight is set through the private DisplayServices framework, so a future macOS update could break it.
 
@@ -37,7 +37,7 @@ macOS stops at its lowest brightness step, the first segment of the brightness H
 ./build.sh
 ```
 
-The script compiles `main.swift`, runs the built-in self-test, signs the app, installs it to `/Applications/BiHanBrightness.app` and launches it.
+The script compiles `main.swift`, runs the built-in self-test, signs the app, installs it to `/Applications/BiHanBrightness.app` and launches it. It also packs the app into `dist/BiHanBrightness-<version>-dev.dmg`, which is developer-signed and not notarized, so it is for this Mac only. `release.sh` makes the notarized DMG for sharing.
 
 On first launch macOS asks for Accessibility access. Allow it in System Settings > Privacy & Security > Accessibility. BiHan starts listening within a second, no relaunch needed. Signing with a certificate (not ad-hoc) keeps the permission across rebuilds.
 
