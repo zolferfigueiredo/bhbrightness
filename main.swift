@@ -4,25 +4,36 @@ import AppKit
 let dot = 1.0 / 16 // macOS's lowest lit step (first HUD segment); sub-zero holds the backlight here
 let dims = (1...16).map { pow(0.9, Double($0)) } // gamma factor per sub-zero step, darkest last
 
-// New sub-zero depth for a plain F1/F2 press (0 = no dimming), or nil to leave the key to macOS.
-func nextDepth(_ depth: Int, _ backlight: Double, up: Bool, isRepeat: Bool) -> Int? {
-    if depth > 0 { return up ? depth - 1 : min(depth + 1, dims.count) }
-    if up || backlight > dot + 0.004 { return nil } // 0.004 absorbs brightness readback rounding
-    return isRepeat ? 0 : 1 // holding F1 stops at the first dot; sub-zero needs a fresh press
+// New (depth, backlight) for a plain F1/F2 press (depth 0 = no dimming), or nil when the press is
+// macOS's. held = a repeat of a press this app already owns.
+func press(_ depth: Int, _ backlight: Double, up: Bool, held: Bool) -> (depth: Int, backlight: Double)? {
+    let step = ((backlight + 0.004) * 16).rounded(.down) / 16 // native step at or below; 0.004 absorbs readback rounding
+    if depth > 0 { return (up ? depth - 1 : min(depth + 1, dims.count), dot) }
+    if up { return held || step <= dot ? (0, min(1, step + 1.0 / 16)) : nil }
+    return held || step > dot ? nil : (1, dot) // sub-zero needs a fresh F1 press at the first dot
 }
 
 if CommandLine.arguments.contains("--selftest") {
+    func check(_ r: (depth: Int, backlight: Double)?, _ want: (Int, Double)?) {
+        precondition(r?.depth == want?.0 && r?.backlight == want?.1)
+    }
     let n = dims.count
     precondition(dims == dims.sorted(by: >) && dims.first! < 1 && dims.last! > 0)
-    precondition(nextDepth(0, 0.5, up: false, isRepeat: false) == nil)
-    precondition(nextDepth(0, 0.125, up: false, isRepeat: false) == nil)
-    precondition(nextDepth(0, dot, up: true, isRepeat: false) == nil)
-    precondition(nextDepth(0, dot, up: false, isRepeat: false) == 1)
-    precondition(nextDepth(0, dot, up: false, isRepeat: true) == 0)
-    precondition(nextDepth(0, 0, up: false, isRepeat: false) == 1)
-    precondition(nextDepth(3, dot, up: false, isRepeat: true) == 4)
-    precondition(nextDepth(n, dot, up: false, isRepeat: false) == n)
-    precondition(nextDepth(1, dot, up: true, isRepeat: true) == 0)
+    check(press(0, 0.5, up: false, held: false), nil)
+    check(press(0, 0.125, up: false, held: false), nil)
+    check(press(0, dot, up: false, held: false), (1, dot))
+    check(press(0, 0.0624999, up: false, held: false), (1, dot))
+    check(press(0, 0, up: false, held: false), (1, dot))
+    check(press(0, dot, up: false, held: true), nil)
+    check(press(3, dot, up: false, held: true), (4, dot))
+    check(press(n, dot, up: false, held: true), (n, dot))
+    check(press(3, dot, up: true, held: false), (2, dot))
+    check(press(1, dot, up: true, held: true), (0, dot))
+    check(press(0, dot, up: true, held: false), (0, 0.125))
+    check(press(0, 0.0624999, up: true, held: false), (0, 0.125))
+    check(press(0, 0.125, up: true, held: false), nil)
+    check(press(0, 0.125, up: true, held: true), (0, 0.1875))
+    check(press(0, 1, up: true, held: true), (0, 1))
     print("selftest ok")
     exit(0)
 }
@@ -35,7 +46,9 @@ let dsGet = unsafeBitCast(dlsym(ds, "DisplayServicesGetBrightness")!, to: GetFn.
 let dsSet = unsafeBitCast(dlsym(ds, "DisplayServicesSetBrightness")!, to: SetFn.self)
 
 var depth = 0
-var ownsKey = false // whether the current press is ours, so its key-up is swallowed too
+// Whether this app owns the current press. Its repeats and key-up must go wherever its key-down went:
+// macOS stops handling brightness keys after a key-down with no key-up, or a key-up with no key-down.
+var owned = false
 var tap: CFMachPort?
 var osd: NSXPCConnection?
 let app = NSApplication.shared
@@ -87,16 +100,13 @@ func showHUD(_ d: CGDirectDisplayID, filled: Int, total: Int) {
                    filledChiclets: UInt32(filled), totalChiclets: UInt32(total), locked: false)
 }
 
-func setDepth(_ n: Int, _ d: CGDirectDisplayID) {
-    if n > 0 {
-        _ = dsSet(d, Float(dot))
-        gamma(d, dims[n - 1])
-    } else if depth > 0 {
-        gamma(d, 1)
-    }
+func apply(_ n: Int, _ level: Double, _ d: CGDirectDisplayID) {
+    _ = dsSet(d, Float(level))
+    if n > 0 { gamma(d, dims[n - 1]) } else if depth > 0 { gamma(d, 1) }
     depth = n
-    // In sub-zero the bar restarts full and empties; at the first dot it matches macOS's own 1 of 16.
-    if n > 0 { showHUD(d, filled: dims.count - n, total: dims.count) } else { showHUD(d, filled: 1, total: 16) }
+    // Sub-zero has its own bar that empties as it gets darker; above it, macOS's 16-segment bar.
+    if n > 0 { showHUD(d, filled: dims.count - n, total: dims.count) }
+    else { showHUD(d, filled: Int((level * 16).rounded()), total: 16) }
 }
 
 // Returns true to swallow the event.
@@ -106,12 +116,16 @@ func handle(_ cg: CGEvent) -> Bool {
     let key = (e.data1 >> 16) & 0xFFFF, isDown = (e.data1 >> 8) & 0xFF == 0xA, isRepeat = e.data1 & 1 == 1
     guard key == 2 || key == 3, // NX_KEYTYPE_BRIGHTNESS_UP / _DOWN
           cg.flags.intersection([.maskShift, .maskControl, .maskAlternate, .maskCommand]).isEmpty else { return false }
-    if !isDown { return ownsKey }
-    guard let d = builtin(), let b = backlight(d),
-          let n = nextDepth(depth, b, up: key == 2, isRepeat: isRepeat) else { ownsKey = false; return false }
-    ownsKey = true
-    DispatchQueue.main.async { setDepth(n, d) }
-    return true
+    if !isDown { return owned }
+    guard let d = builtin(), let b = backlight(d) else {
+        if !isRepeat { owned = false }
+        return owned
+    }
+    let r = press(depth, b, up: key == 2, held: isRepeat && owned)
+    if !isRepeat { owned = r != nil }
+    if owned, let r { DispatchQueue.main.async { apply(r.depth, r.backlight, d) } }
+    // A held F1 owned by macOS stops at the first dot: only its repeats are dropped, never its key-up.
+    return owned || (isRepeat && key == 3 && b <= dot + 0.004)
 }
 
 func startTap() {
