@@ -1,3 +1,5 @@
+<img src="icon.svg" width="128" alt="BiHanBrightness icon">
+
 # BiHanBrightness
 
 A tiny macOS menu bar app that takes your MacBook's built-in display below zero, darker than the lowest brightness macOS allows. BiHan stays out of the way until the screen needs to go cold.
@@ -40,6 +42,8 @@ The script compiles `main.swift`, runs the built-in self-test, signs the app, in
 On first launch macOS asks for Accessibility access. Allow it in System Settings > Privacy & Security > Accessibility. BiHan starts listening within a second, no relaunch needed. Signing with a certificate (not ad-hoc) keeps the permission across rebuilds.
 
 To start it at login, add it in System Settings > General > Login Items.
+
+Click the menu bar icon for About (opens this repository), the version, and Quit.
 
 ## Tuning
 

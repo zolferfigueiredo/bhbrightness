@@ -2,6 +2,7 @@
 set -eu
 cd "$(dirname "$0")"
 NAME=BiHanBrightness
+VERSION=1.0.0
 APP="/Applications/$NAME.app"
 
 swiftc -O -swift-version 5 main.swift -o "$NAME"
@@ -17,6 +18,8 @@ cat > "$APP/Contents/Info.plist" <<EOF
   <key>CFBundleIdentifier</key><string>local.bihanbrightness</string>
   <key>CFBundleName</key><string>$NAME</string>
   <key>CFBundleExecutable</key><string>$NAME</string>
+  <key>CFBundleShortVersionString</key><string>$VERSION</string>
+  <key>CFBundleVersion</key><string>$VERSION</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>LSUIElement</key><true/>
 </dict></plist>
