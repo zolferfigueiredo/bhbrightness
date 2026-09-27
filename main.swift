@@ -291,9 +291,6 @@ extension NSApplication {
 
 item.menu = NSMenu()
 item.menu?.addItem(withTitle: "About BiHan Brightness", action: #selector(NSApplication.showAbout), keyEquivalent: "")
-if let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
-    item.menu?.addItem(withTitle: "Version \(v)", action: nil, keyEquivalent: "") // no action: shown greyed out
-}
 item.menu?.addItem(.separator())
 item.menu?.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 

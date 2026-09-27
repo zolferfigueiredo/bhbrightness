@@ -43,7 +43,7 @@ On first launch macOS asks for Accessibility access. Allow it in System Settings
 
 To start it at login, add it in System Settings > General > Login Items.
 
-Click the menu bar icon for About (version and website), the version, and Quit.
+Click the menu bar icon for About (version and website) and Quit.
 
 ## Tuning
 
