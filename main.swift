@@ -8,36 +8,31 @@ import Foundation // Linux CI builds only the selftest
 let dot = 1.0 / 16 // macOS's lowest lit step (first HUD segment); sub-zero holds the backlight here
 let dims = (1...16).map { pow(0.9, Double($0)) } // gamma factor per sub-zero step, darkest last
 
-// New (depth, backlight) for a plain F1/F2 press (depth 0 = no dimming), or nil when the press is
-// macOS's. held = a repeat of a press this app already owns.
-func press(_ depth: Int, _ backlight: Double, up: Bool, held: Bool) -> (depth: Int, backlight: Double)? {
-    let step = ((backlight + 0.004) * 16).rounded(.down) / 16 // native step at or below; 0.004 absorbs readback rounding
-    if depth > 0 { return (up ? depth - 1 : min(depth + 1, dims.count), dot) }
-    if up { return held || step <= dot ? (0, min(1, step + 1.0 / 16)) : nil }
-    return held || step > dot ? nil : (1, dot) // sub-zero needs a fresh F1 press at the first dot
+// Native step at or below a backlight readback; 0.004 absorbs readback rounding.
+func step(_ backlight: Double) -> Double { ((backlight + 0.004) * 16).rounded(.down) / 16 }
+
+// New sub-zero depth for a plain F1/F2 key-down or repeat (0 = no dimming), or nil when the step is macOS's.
+func press(_ depth: Int, _ backlight: Double, up: Bool) -> Int? {
+    if depth > 0 { return up ? depth - 1 : min(depth + 1, dims.count) }
+    return up || step(backlight) > dot ? nil : 1
 }
 
 if CommandLine.arguments.contains("--selftest") {
-    func check(_ r: (depth: Int, backlight: Double)?, _ want: (Int, Double)?) {
-        precondition(r?.depth == want?.0 && r?.backlight == want?.1)
-    }
     let n = dims.count
     precondition(dims == dims.sorted(by: >) && dims.first! < 1 && dims.last! > 0)
-    check(press(0, 0.5, up: false, held: false), nil)
-    check(press(0, 0.125, up: false, held: false), nil)
-    check(press(0, dot, up: false, held: false), (1, dot))
-    check(press(0, 0.0624999, up: false, held: false), (1, dot))
-    check(press(0, 0, up: false, held: false), (1, dot))
-    check(press(0, dot, up: false, held: true), nil)
-    check(press(3, dot, up: false, held: true), (4, dot))
-    check(press(n, dot, up: false, held: true), (n, dot))
-    check(press(3, dot, up: true, held: false), (2, dot))
-    check(press(1, dot, up: true, held: true), (0, dot))
-    check(press(0, dot, up: true, held: false), (0, 0.125))
-    check(press(0, 0.0624999, up: true, held: false), (0, 0.125))
-    check(press(0, 0.125, up: true, held: false), nil)
-    check(press(0, 0.125, up: true, held: true), (0, 0.1875))
-    check(press(0, 1, up: true, held: true), (0, 1))
+    precondition(press(0, 0.5, up: false) == nil)
+    precondition(press(0, 0.125, up: false) == nil)
+    precondition(press(0, 0.1, up: false) == 1)
+    precondition(press(0, dot, up: false) == 1)
+    precondition(press(0, 0.0624999, up: false) == 1)
+    precondition(press(0, 0, up: false) == 1)
+    precondition(press(3, dot, up: false) == 4)
+    precondition(press(n, dot, up: false) == n)
+    precondition(press(3, dot, up: true) == 2)
+    precondition(press(1, dot, up: true) == 0)
+    precondition(press(0, dot, up: true) == nil)
+    precondition(press(0, 0, up: true) == nil)
+    precondition(press(0, 1, up: true) == nil)
     print("selftest ok")
     exit(0)
 }
@@ -51,11 +46,10 @@ let dsGet = unsafeBitCast(dlsym(ds, "DisplayServicesGetBrightness")!, to: GetFn.
 let dsSet = unsafeBitCast(dlsym(ds, "DisplayServicesSetBrightness")!, to: SetFn.self)
 
 var depth = 0
-// Whether this app owns the current press. Its repeats and key-up must go wherever its key-down went:
-// macOS stops handling brightness keys after a key-down with no key-up, or a key-up with no key-down.
-var owned = false
+// Per key, whether this app got the current press's key-down. Its key-up must go the same way:
+// macOS stops handling brightness keys after a key-down whose key-up it never gets.
+var owned = [Int: Bool]()
 var tap: CFMachPort?
-var osd: NSXPCConnection?
 let app = NSApplication.shared
 let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
@@ -83,54 +77,37 @@ func gammaTop(_ d: CGDirectDisplayID) -> Double {
     return n > 0 ? Double(r[Int(n) - 1]) : 1
 }
 
-// The private XPC service behind the system volume/brightness square, called the same way as in
-// deej-mac and MonitorControl. Best effort: a lost HUD never blocks a brightness change.
-@objc protocol OSDUIHelperProtocol {
-    func showImage(_ image: Int64, onDisplayID: UInt32, priority: UInt32, msecUntilFade: UInt32,
-                   filledChiclets: UInt32, totalChiclets: UInt32, locked: Bool)
-}
-
-func showHUD(_ d: CGDirectDisplayID, filled: Int, total: Int) {
-    if osd == nil {
-        let c = NSXPCConnection(machServiceName: "com.apple.OSDUIHelper", options: [])
-        c.remoteObjectInterface = NSXPCInterface(with: OSDUIHelperProtocol.self)
-        // OSDUIHelper exits when idle; forget the connection so the next call opens a fresh one.
-        c.invalidationHandler = { DispatchQueue.main.async { osd = nil } }
-        c.interruptionHandler = c.invalidationHandler
-        c.resume()
-        osd = c
-    }
-    (osd?.remoteObjectProxyWithErrorHandler { _ in } as? OSDUIHelperProtocol)?
-        .showImage(1, onDisplayID: d, priority: 0x1f4, msecUntilFade: 1000, // image 1 = sun
-                   filledChiclets: UInt32(filled), totalChiclets: UInt32(total), locked: false)
-}
-
-func apply(_ n: Int, _ level: Double, _ d: CGDirectDisplayID) {
-    _ = dsSet(d, Float(level))
+func apply(_ n: Int, _ d: CGDirectDisplayID) {
+    _ = dsSet(d, Float(dot))
     if n > 0 { gamma(d, dims[n - 1]) } else if depth > 0 { gamma(d, 1) }
     depth = n
-    // Sub-zero has its own bar that empties as it gets darker; above it, macOS's 16-segment bar.
-    if n > 0 { showHUD(d, filled: dims.count - n, total: dims.count) }
-    else { showHUD(d, filled: Int((level * 16).rounded()), total: 16) }
+    showHUD(d, filled: dims.count - n) // empties as it gets darker, full at depth 0
 }
 
-// Returns true to swallow the event.
-func handle(_ cg: CGEvent) -> Bool {
+// Returns the event to pass on, or nil to swallow it.
+func handle(_ cg: CGEvent) -> CGEvent? {
     guard let e = NSEvent(cgEvent: cg), e.type == .systemDefined,
-          e.subtype.rawValue == 8 else { return false } // NX_SUBTYPE_AUX_CONTROL_BUTTONS
+          e.subtype.rawValue == 8 else { return cg } // NX_SUBTYPE_AUX_CONTROL_BUTTONS
     let key = (e.data1 >> 16) & 0xFFFF, isDown = (e.data1 >> 8) & 0xFF == 0xA, isRepeat = e.data1 & 1 == 1
-    guard key == 2 || key == 3, // NX_KEYTYPE_BRIGHTNESS_UP / _DOWN
-          cg.flags.intersection([.maskShift, .maskControl, .maskAlternate, .maskCommand]).isEmpty else { return false }
-    if !isDown { return owned }
-    guard let d = builtin(), let b = backlight(d) else {
-        if !isRepeat { owned = false }
-        return owned
+    guard key == 2 || key == 3 else { return cg } // NX_KEYTYPE_BRIGHTNESS_UP / _DOWN
+    if !isDown { return owned[key] == true ? nil : cg } // modifiers may be let go first, so this precedes their check
+    guard cg.flags.intersection([.maskShift, .maskControl, .maskAlternate, .maskCommand]).isEmpty,
+          let d = builtin(), let b = backlight(d) else {
+        if !isRepeat { owned[key] = false }
+        return owned[key] == true ? nil : cg
     }
-    let r = press(depth, b, up: key == 2, held: isRepeat && owned)
-    if !isRepeat { owned = r != nil }
-    if owned, let r { DispatchQueue.main.async { apply(r.depth, r.backlight, d) } }
-    // A held F1 owned by macOS stops at the first dot: only its repeats are dropped, never its key-up.
-    return owned || (isRepeat && key == 3 && b <= dot + 0.004)
+    let n = press(depth, b, up: key == 2)
+    if !isRepeat { owned[key] = n != nil }
+    if let n {
+        DispatchQueue.main.async { apply(n, d) }
+        return nil
+    }
+    DispatchQueue.main.async { hud.orderOut(nil) } // macOS takes this step under its own system HUD
+    guard owned[key] == true else { return cg }
+    // Held on past sub-zero: macOS gets a key-down in this repeat's place, then the rest of the press.
+    owned[key] = false
+    return NSEvent.otherEvent(with: .systemDefined, location: .zero, modifierFlags: [], timestamp: e.timestamp, windowNumber: 0,
+                              context: nil, subtype: 8, data1: key << 16 | 0xA00, data2: -1)?.cgEvent
 }
 
 func startTap() {
@@ -141,7 +118,8 @@ func startTap() {
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
             return Unmanaged.passUnretained(event)
         }
-        return handle(event) ? nil : Unmanaged.passUnretained(event)
+        guard let out = handle(event) else { return nil }
+        return out === event ? Unmanaged.passUnretained(event) : Unmanaged.passRetained(out) // the system releases a new event
     }, userInfo: nil)
     if let tap { CFRunLoopAddSource(CFRunLoopGetMain(), CFMachPortCreateRunLoopSource(nil, tap, 0), .commonModes) }
 }
@@ -227,6 +205,57 @@ icon.addRepresentation(bitmap(logo2x.map { ".." + $0 + ".." }, scale: 2)) // pad
 icon.isTemplate = true // macOS tints it: white on a dark menu bar, black on a light one
 icon.accessibilityDescription = "BiHan Brightness"
 item.button?.image = icon
+
+// BiHan HUD: macOS's classic brightness square (OSDUIHelper's geometry, measured at 2x), with the ninja for its sun.
+final class HUDView: NSView {
+    var filled = 0
+    override var isFlipped: Bool { true }
+    override func draw(_ dirtyRect: NSRect) {
+        NSColor(white: 0, alpha: 0.25).setFill()
+        NSRect(x: 21, y: 173, width: 10 * dims.count - 1, height: 6).fill()
+        NSColor(white: 0.55, alpha: 1).setFill()
+        for i in 0..<filled { NSRect(x: 21 + 10 * i, y: 173, width: 9, height: 6).fill() }
+        for (y, row) in logo2x.enumerated() {
+            for (x, ch) in row.enumerated() where ch == "#" { NSRect(x: 61 + 3 * x, y: 33 + 3 * y, width: 3, height: 3).fill() }
+        }
+    }
+}
+let hudView = HUDView(frame: NSRect(x: 0, y: 0, width: 200, height: 200))
+let hud = NSWindow(contentRect: hudView.frame, styleMask: .borderless, backing: .buffered, defer: true)
+hud.level = .screenSaver
+hud.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
+hud.ignoresMouseEvents = true
+hud.isOpaque = false
+hud.backgroundColor = .clear
+hud.hasShadow = false
+hud.appearance = NSAppearance(named: .darkAqua) // the dark square in light mode too
+let blur = NSVisualEffectView(frame: hudView.frame)
+blur.material = .hudWindow
+blur.state = .active // the app is never active, and the default state would render the blur inactive
+blur.maskImage = NSImage(size: hudView.frame.size, flipped: false) { NSBezierPath(roundedRect: $0, xRadius: 18, yRadius: 18).fill(); return true }
+blur.addSubview(hudView)
+hud.contentView = blur
+var hudShown = 0 // bumped per show, so an older fade leaves a newer HUD alone
+
+func showHUD(_ d: CGDirectDisplayID, filled: Int) {
+    guard let s = NSScreen.screens.first(where: { $0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID == d })
+    else { return }
+    hudShown += 1
+    let shown = hudShown
+    hudView.filled = filled
+    hudView.needsDisplay = true
+    hud.setFrameOrigin(NSPoint(x: s.frame.midX - 100, y: s.frame.minY + 140))
+    hud.alphaValue = 1
+    hud.orderFrontRegardless()
+    for i in 1...10 { // fades by hand after 1 s: an animator() fade keeps running over a newer show
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1 + 0.03 * Double(i)) {
+            guard shown == hudShown else { return }
+            hud.alphaValue = 1 - CGFloat(i) / 10
+            if i == 10 { hud.orderOut(nil) }
+        }
+    }
+}
+
 extension NSApplication {
     @objc func openRepo() { NSWorkspace.shared.open(URL(string: "https://github.com/zolferfigueiredo/bihan-mac-brightness")!) }
 }
@@ -248,7 +277,8 @@ Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
     // An untrusted tap is still created, with its events silently dropped, so gate on trust.
     if tap == nil, AXIsProcessTrusted() { startTap() }
     guard depth > 0, let d = builtin() else { return }
-    if let b = backlight(d), b > dot + 0.004 { depth = 0; gamma(d, 1) } // raised elsewhere: leave sub-zero
+    // Raised elsewhere: leave sub-zero. Uses step(): just after a held F1 crosses in, macOS's fade still reads above dot.
+    if let b = backlight(d), step(b) > dot { depth = 0; gamma(d, 1) }
     else if abs(gammaTop(d) - dims[depth - 1]) > 0.01 { gamma(d, dims[depth - 1]) } // macOS resets gamma on wake and display changes
 }
 
