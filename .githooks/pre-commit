@@ -1,0 +1,5 @@
+#!/bin/sh
+if [ "$(git symbolic-ref --short HEAD 2>/dev/null)" = "main" ]; then
+  echo "Direct commits to main are blocked; commit on a feature branch." >&2
+  exit 1
+fi
