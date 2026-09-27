@@ -222,7 +222,16 @@ icon.addRepresentation(bitmap(logo2x.map { ".." + $0 + ".." }, scale: 2)) // pad
 icon.isTemplate = true // macOS tints it: white on a dark menu bar, black on a light one
 icon.accessibilityDescription = "BiHan Brightness"
 item.button?.image = icon
+extension NSApplication {
+    @objc func openRepo() { NSWorkspace.shared.open(URL(string: "https://github.com/zolferfigueiredo/bihan-mac-brightness")!) }
+}
+
 item.menu = NSMenu()
+item.menu?.addItem(withTitle: "About BiHanBrightness", action: #selector(NSApplication.openRepo), keyEquivalent: "")
+if let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+    item.menu?.addItem(withTitle: "Version \(v)", action: nil, keyEquivalent: "") // no action: shown greyed out
+}
+item.menu?.addItem(.separator())
 item.menu?.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
 NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: nil) { _ in
