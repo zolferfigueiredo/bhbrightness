@@ -1,21 +1,22 @@
 #!/bin/sh
 set -eu
 cd "$(dirname "$0")"
-APP="$HOME/Applications/BrightExtraCtrl.app"
+NAME=BiHanBrightness
+APP="/Applications/$NAME.app"
 
-swiftc -O -swift-version 5 main.swift -o BrightExtraCtrl
-./BrightExtraCtrl --selftest
+swiftc -O -swift-version 5 main.swift -o "$NAME"
+./"$NAME" --selftest
 
-pkill -x BrightExtraCtrl && sleep 1 || true
+pkill -x "$NAME" && sleep 1 || true
 mkdir -p "$APP/Contents/MacOS"
-mv BrightExtraCtrl "$APP/Contents/MacOS/"
-cat > "$APP/Contents/Info.plist" <<'EOF'
+mv "$NAME" "$APP/Contents/MacOS/"
+cat > "$APP/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>CFBundleIdentifier</key><string>local.brightextractrl</string>
-  <key>CFBundleName</key><string>BrightExtraCtrl</string>
-  <key>CFBundleExecutable</key><string>BrightExtraCtrl</string>
+  <key>CFBundleIdentifier</key><string>local.bihanbrightness</string>
+  <key>CFBundleName</key><string>$NAME</string>
+  <key>CFBundleExecutable</key><string>$NAME</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>LSUIElement</key><true/>
 </dict></plist>

@@ -141,7 +141,34 @@ func startTap() {
     if let tap { CFRunLoopAddSource(CFRunLoopGetMain(), CFMachPortCreateRunLoopSource(nil, tap, 0), .commonModes) }
 }
 
-item.button?.image = NSImage(systemSymbolName: "sun.min", accessibilityDescription: "Sub-zero dimming")
+// 1 pt per cell keeps the pixel art crisp on both Retina and 1x displays.
+let logo = [
+    "....#######....",
+    "..###########..",
+    ".#############.",
+    "###############",
+    "##...#####...##",
+    "#.....###.....#",
+    "#.###..#..###.#",
+    "#...##...##...#",
+    "##...........##",
+    ".##..#####..##.",
+    ".###.#...#.###.",
+    "..##.#####.##..",
+    "..##.#...#.##..",
+    "...#.#####.#...",
+    "....##...##....",
+    ".....#####.....",
+]
+item.button?.image = NSImage(size: NSSize(width: logo[0].count, height: logo.count), flipped: true) { _ in
+    NSColor.black.setFill()
+    for (r, row) in logo.enumerated() {
+        for (c, ch) in row.enumerated() where ch == "#" { NSRect(x: c, y: r, width: 1, height: 1).fill() }
+    }
+    return true
+}
+item.button?.image?.isTemplate = true // macOS tints it: white on a dark menu bar, black on a light one
+item.button?.image?.accessibilityDescription = "BiHan Brightness"
 item.menu = NSMenu()
 item.menu?.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
