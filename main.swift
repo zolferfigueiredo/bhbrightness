@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import Foundation // Linux CI builds only the selftest
+#endif
 
 // ponytail: calibration knobs, tuned by eye on this panel.
 let dot = 1.0 / 16 // macOS's lowest lit step (first HUD segment); sub-zero holds the backlight here
@@ -38,6 +42,7 @@ if CommandLine.arguments.contains("--selftest") {
     exit(0)
 }
 
+#if canImport(AppKit)
 typealias GetFn = @convention(c) (CGDirectDisplayID, UnsafeMutablePointer<Float>) -> Int32
 typealias SetFn = @convention(c) (CGDirectDisplayID, Float) -> Int32
 // Private API: the only way to set the built-in backlight to arbitrary values.
@@ -249,3 +254,4 @@ Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
 
 _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
 app.run()
+#endif

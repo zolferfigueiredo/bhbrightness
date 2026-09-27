@@ -1,0 +1,13 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  check:
+    runs-on: ubuntu-24.04 # macOS runners bill 10x on this private repo
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: shellcheck build.sh release.sh .githooks/pre-commit
+      - run: swiftc -O -swift-version 5 main.swift -o selftest && ./selftest --selftest
