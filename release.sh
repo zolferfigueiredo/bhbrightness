@@ -1,8 +1,8 @@
 #!/bin/sh
-# One-time setup: xcrun notarytool store-credentials bihan --key <AuthKey.p8> --key-id <id> --issuer <issuer-id>
+# One-time setup: xcrun notarytool store-credentials beehan --key <AuthKey.p8> --key-id <id> --issuer <issuer-id>
 set -eu
 cd "$(dirname "$0")"
-NAME=BiHanBrightness
+NAME=BeeHanBrightness
 VERSION=${1:?usage: ./release.sh <version>}
 ID="Developer ID Application: Zolfer Figueiredo (497V6MCDS8)"
 APP="dist/dmg/$NAME.app"
@@ -27,7 +27,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>CFBundleIdentifier</key><string>com.zolfer.bihanbrightness</string>
+  <key>CFBundleIdentifier</key><string>com.zolfer.beehanbrightness</string>
   <key>CFBundleName</key><string>$NAME</string>
   <key>CFBundleExecutable</key><string>$NAME</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
@@ -90,7 +90,7 @@ hdiutil detach "/Volumes/$NAME" >/dev/null
 hdiutil convert dist/rw.dmg -format UDZO -o "$DMG"
 rm dist/rw.dmg
 codesign --timestamp --sign "$ID" "$DMG"
-xcrun notarytool submit "$DMG" --keychain-profile bihan --wait
+xcrun notarytool submit "$DMG" --keychain-profile beehan --wait
 xcrun stapler staple "$DMG"
 spctl --assess --type open --context context:primary-signature -vv "$DMG"
 echo "Release ready: $DMG"
