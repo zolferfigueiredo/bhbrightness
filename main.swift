@@ -259,6 +259,7 @@ func showHUD(_ d: CGDirectDisplayID, filled: Int) {
 var about: NSWindow?
 extension NSApplication {
     @objc func openSite() { NSWorkspace.shared.open(URL(string: "https://bhb.zolfer.com/")!) }
+    @objc func openAuthor() { NSWorkspace.shared.open(URL(string: "http://zolfer.com/")!) }
     @objc func showAbout() {
         if about == nil {
             let name = NSTextField(labelWithString: "BeeHan Brightness")
@@ -267,7 +268,12 @@ extension NSApplication {
             let site = NSButton(title: "Website", target: self, action: #selector(openSite))
             site.isBordered = false
             site.contentTintColor = .linkColor
-            let text = NSStackView(views: [name, NSTextField(labelWithString: "By Zolfer Figueiredo"),
+            let author = NSButton(title: "Zolfer Figueiredo", target: self, action: #selector(openAuthor))
+            author.isBordered = false
+            author.contentTintColor = .linkColor
+            let by = NSStackView(views: [NSTextField(labelWithString: "By"), author])
+            by.spacing = 3
+            let text = NSStackView(views: [name, by,
                                            NSTextField(labelWithString: "Version \(version)"), site])
             text.orientation = .vertical
             text.setCustomSpacing(12, after: name)

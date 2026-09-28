@@ -2,7 +2,7 @@
 set -eu
 cd "$(dirname "$0")"
 NAME=BeeHanBrightness
-VERSION=1.0.3
+VERSION=1.0.4
 APP="/Applications/$NAME.app"
 
 swiftc -O -swift-version 5 main.swift -o "$NAME"
