@@ -203,10 +203,10 @@ let icon = NSImage(size: NSSize(width: logo1x[0].count, height: logo1x.count))
 icon.addRepresentation(bitmap(logo1x, scale: 1))
 icon.addRepresentation(bitmap(logo2x.map { ".." + $0 + ".." }, scale: 2)) // padded to the 1x width
 icon.isTemplate = true // macOS tints it: white on a dark menu bar, black on a light one
-icon.accessibilityDescription = "BiHan Brightness"
+icon.accessibilityDescription = "BeeHan Brightness"
 item.button?.image = icon
 
-// BiHan HUD: macOS's classic brightness square (OSDUIHelper's geometry, measured at 2x), with the ninja for its sun.
+// BeeHan HUD: macOS's classic brightness square (OSDUIHelper's geometry, measured at 2x), with the ninja for its sun.
 final class HUDView: NSView {
     var filled = 0
     override var isFlipped: Bool { true }
@@ -261,7 +261,7 @@ extension NSApplication {
     @objc func openSite() { NSWorkspace.shared.open(URL(string: "https://bhb.zolfer.com/")!) }
     @objc func showAbout() {
         if about == nil {
-            let name = NSTextField(labelWithString: "BiHan Brightness")
+            let name = NSTextField(labelWithString: "BeeHan Brightness")
             name.font = .boldSystemFont(ofSize: 16)
             let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
             let site = NSButton(title: "Website", target: self, action: #selector(openSite))
@@ -290,7 +290,7 @@ extension NSApplication {
 }
 
 item.menu = NSMenu()
-item.menu?.addItem(withTitle: "About BiHan Brightness", action: #selector(NSApplication.showAbout), keyEquivalent: "")
+item.menu?.addItem(withTitle: "About BeeHan Brightness", action: #selector(NSApplication.showAbout), keyEquivalent: "")
 item.menu?.addItem(.separator())
 item.menu?.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
