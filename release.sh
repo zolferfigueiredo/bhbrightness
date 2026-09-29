@@ -3,7 +3,7 @@
 set -eu
 cd "$(dirname "$0")"
 NAME=BeeHanBrightness
-VERSION=${1:?usage: ./release.sh <version>}
+VERSION=${1:-$(sed -n 's/^VERSION=//p' build.sh)}
 ID="Developer ID Application: Zolfer Figueiredo (497V6MCDS8)"
 APP="dist/dmg/$NAME.app"
 DMG="dist/$NAME-$VERSION.dmg"
