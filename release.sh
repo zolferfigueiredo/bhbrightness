@@ -62,35 +62,10 @@ rm dist/background.svg dist/bg1.png dist/bg2.png
 codesign --force --options runtime --timestamp --sign "$ID" "$APP"
 ln -s /Applications dist/dmg/Applications
 
-# Finder addresses the volume by name, so a mounted older copy would get the layout instead.
-[ ! -e "/Volumes/$NAME" ] || { echo "Eject /Volumes/$NAME first." >&2; exit 1; }
-hdiutil create -volname "$NAME" -srcfolder dist/dmg -format UDRW dist/rw.dmg
-hdiutil attach -noverify -noautoopen dist/rw.dmg >/dev/null
-osascript <<EOF
-tell application "Finder"
-  tell disk "$NAME"
-    open
-    set current view of container window to icon view
-    set toolbar visible of container window to false
-    set statusbar visible of container window to false
-    set bounds of container window to {200, 120, 800, 552}
-    set opts to icon view options of container window
-    set arrangement of opts to not arranged
-    set icon size of opts to 100
-    set text size of opts to 10
-    set background picture of opts to file "$NAME.app:Contents:Resources:dmg-background.tiff"
-    set position of item "$NAME.app" to {170, 160}
-    set position of item "Applications" to {430, 160}
-    close
-  end tell
-end tell
-EOF
-until [ -f "/Volumes/$NAME/.DS_Store" ]; do sleep 1; done
-rm -rf "/Volumes/$NAME/.fseventsd" "/Volumes/$NAME/.Trashes"
-sync
-hdiutil detach "/Volumes/$NAME" >/dev/null
-hdiutil convert dist/rw.dmg -format UDZO -o "$DMG"
-rm dist/rw.dmg
+# Finder's window layout (bounds, icon spots at {170,160} and {430,160}, background path), saved once
+# from a DMG Finder laid out, so the build never opens Finder. The icon spots must match the picture.
+cp dmg.DS_Store dist/dmg/.DS_Store
+hdiutil create -volname "$NAME" -srcfolder dist/dmg -format UDZO "$DMG"
 codesign --timestamp --sign "$ID" "$DMG"
 xcrun notarytool submit "$DMG" --keychain-profile beehan --wait
 xcrun stapler staple "$DMG"
