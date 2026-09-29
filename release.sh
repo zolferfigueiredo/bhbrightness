@@ -38,11 +38,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
   <key>LSUIElement</key><true/>
 </dict></plist>
 EOF
-# Notarization requires the hardened runtime and a secure timestamp.
-codesign --force --options runtime --timestamp --sign "$ID" "$APP"
-
-ln -s /Applications dist/dmg/Applications
-mkdir dist/dmg/.background
+# The DMG window's background lives inside the app, so the DMG shows nothing but the app and Applications.
 # Finder draws file names in black over a background picture, even in dark mode. They vanish on
 # pure black, so the faded icon must not reach them, and the picture carries the visible labels.
 # .AppleSystemUIFont is the only font name sips maps to SF.
@@ -59,8 +55,12 @@ cat > dist/background.svg <<EOF
 </svg>
 EOF
 for s in 1 2; do sips -s format png -z $((440 * s)) $((600 * s)) dist/background.svg --out "dist/bg$s.png" >/dev/null; done
-tiffutil -cathidpicheck dist/bg1.png dist/bg2.png -out dist/dmg/.background/background.tiff
+tiffutil -cathidpicheck dist/bg1.png dist/bg2.png -out "$APP/Contents/Resources/dmg-background.tiff"
 rm dist/background.svg dist/bg1.png dist/bg2.png
+
+# Notarization requires the hardened runtime and a secure timestamp.
+codesign --force --options runtime --timestamp --sign "$ID" "$APP"
+ln -s /Applications dist/dmg/Applications
 
 # Finder addresses the volume by name, so a mounted older copy would get the layout instead.
 [ ! -e "/Volumes/$NAME" ] || { echo "Eject /Volumes/$NAME first." >&2; exit 1; }
@@ -78,7 +78,7 @@ tell application "Finder"
     set arrangement of opts to not arranged
     set icon size of opts to 100
     set text size of opts to 10
-    set background picture of opts to file ".background:background.tiff"
+    set background picture of opts to file "$NAME.app:Contents:Resources:dmg-background.tiff"
     set position of item "$NAME.app" to {170, 160}
     set position of item "Applications" to {430, 160}
     close
@@ -86,6 +86,8 @@ tell application "Finder"
 end tell
 EOF
 until [ -f "/Volumes/$NAME/.DS_Store" ]; do sleep 1; done
+rm -rf "/Volumes/$NAME/.fseventsd" "/Volumes/$NAME/.Trashes"
+sync
 hdiutil detach "/Volumes/$NAME" >/dev/null
 hdiutil convert dist/rw.dmg -format UDZO -o "$DMG"
 rm dist/rw.dmg
