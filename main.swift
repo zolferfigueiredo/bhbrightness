@@ -448,7 +448,7 @@ extension NSApplication {
             }
             defaults.set(Date(), forKey: "lastUpdateCheck")
             guard isNewer(latest, than: appVersion) else {
-                if !quiet { alert("You're up to date", "BeeHan Brightness \(appVersion) is the latest version.") }
+                if !quiet { alert("You're up to date!", "BeeHan Brightness \(appVersion) is currently the newest version available.", "OK") }
                 return
             }
             guard alert("BeeHan Brightness \(latest) is available", "You have \(appVersion). Update now?", "Update Now", "Later") else { return }
