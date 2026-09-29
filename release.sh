@@ -3,7 +3,7 @@
 set -eu
 cd "$(dirname "$0")"
 NAME=BeeHanBrightness
-VERSION=${1:-$(sed -n 's/^VERSION=//p' build.sh)}
+VERSION=$(sed -n 's/^VERSION=//p' build.sh)
 ID="Developer ID Application: Zolfer Figueiredo (497V6MCDS8)"
 APP="dist/dmg/$NAME.app"
 DMG="dist/$NAME-$VERSION.dmg"
@@ -96,3 +96,7 @@ xcrun notarytool submit "$DMG" --keychain-profile beehan --wait
 xcrun stapler staple "$DMG"
 spctl --assess --type open --context context:primary-signature -vv "$DMG"
 echo "Release ready: $DMG"
+[ "${1:-}" != --url ] || {
+  loc=$(curl -fsS -o /dev/null -w '%{redirect_url}' --data-urlencode "url=https://bhb.zolfer.com/$NAME-$VERSION.dmg" https://url.zolfer.com/dmg)
+  echo "Download link: https://url.zolfer.com/${loc##*c=}"
+}
