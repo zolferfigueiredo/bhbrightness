@@ -39,13 +39,15 @@ macOS stops at its lowest brightness step, the first segment of its brightness i
 
 The script compiles `main.swift`, runs the built-in self-test, signs the app, installs it to `/Applications/BeeHanBrightness.app` and launches it. It also packs the app into `dist/BeeHanBrightness-<version>-dev.dmg`, which is developer-signed and not notarized, so it is for this Mac only. `release.sh` makes the notarized DMG for sharing, using the version set in `build.sh`. `release.sh --url` also makes the permanent url.zolfer.com download link.
 
-For quick testing, `./run.sh` compiles and runs the app in the foreground without installing or signing it. Running the bare binary means the Accessibility permission belongs to your terminal app, so grant it there.
+For quick testing, `./run.sh` quits any running BeeHan, builds the app into `.build/` without installing or signing it, and runs it in the foreground. It starts the program inside the app directly rather than through `open`, so the Accessibility permission belongs to your terminal app; grant it there.
 
 On first launch macOS asks for Accessibility access. Allow it in System Settings > Privacy & Security > Accessibility. BeeHan starts listening within a second, no relaunch needed. Signing with a certificate (not ad-hoc) keeps the permission across rebuilds.
 
-To start it at login, add it in System Settings > General > Login Items.
+To start it at login, turn on **Launch at login** in the menu.
 
-Click the menu bar icon for About (version and website) and Quit.
+Click the menu bar icon for Launch at login, Keep in Dock, About (version and website), Check for updates…, Check automatically (daily, weekly by default, or never) and Quit.
+
+**Check for updates…** asks bhb.zolfer.com for `latest.json`, a plain download that sends nothing about you. When there is a newer version, **Update Now** downloads it, replaces the copy in Applications and relaunches. BeeHan needs macOS 13 or later.
 
 ## Tuning
 
