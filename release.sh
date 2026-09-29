@@ -11,7 +11,7 @@ DMG="dist/$NAME-$VERSION.dmg"
 rm -rf dist
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" dist/AppIcon.iconset
 for arch in arm64 x86_64; do
-  swiftc -O -swift-version 5 -target $arch-apple-macos11 main.swift -o "dist/$NAME-$arch"
+  swiftc -O -swift-version 5 -target $arch-apple-macos13 main.swift -o "dist/$NAME-$arch"
 done
 lipo -create "dist/$NAME-arm64" "dist/$NAME-x86_64" -output "$APP/Contents/MacOS/$NAME"
 rm "dist/$NAME-arm64" "dist/$NAME-x86_64"
@@ -34,7 +34,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
   <key>CFBundleVersion</key><string>$VERSION</string>
-  <key>LSMinimumSystemVersion</key><string>11.0</string>
+  <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>LSUIElement</key><true/>
 </dict></plist>
 EOF

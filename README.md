@@ -43,9 +43,11 @@ For quick testing, `./run.sh` compiles and runs the app in the foreground withou
 
 On first launch macOS asks for Accessibility access. Allow it in System Settings > Privacy & Security > Accessibility. BeeHan starts listening within a second, no relaunch needed. Signing with a certificate (not ad-hoc) keeps the permission across rebuilds.
 
-To start it at login, add it in System Settings > General > Login Items.
+To start it at login, turn on **Launch at login** in the menu.
 
-Click the menu bar icon for About (version and website) and Quit.
+Click the menu bar icon for Launch at login, Keep in Dock, About (version and website), Check for updates…, Check automatically (daily, weekly by default, or never) and Quit.
+
+**Check for updates…** asks bhb.zolfer.com for `latest.json`, a plain download that sends nothing about you. When there is a newer version, **Update Now** downloads it, replaces the copy in Applications and relaunches. BeeHan needs macOS 13 or later.
 
 ## Tuning
 
