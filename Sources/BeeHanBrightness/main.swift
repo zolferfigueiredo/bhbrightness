@@ -1,8 +1,10 @@
 #if canImport(AppKit)
 import AppKit
+import UserNotifications
 
 let app = NSApplication.shared
 app.delegate = appDelegate
+UNUserNotificationCenter.current().delegate = appDelegate
 item.button?.image = menuBarIcon()
 setUpMenu()
 
