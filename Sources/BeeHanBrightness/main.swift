@@ -2,6 +2,7 @@
 import AppKit
 
 let app = NSApplication.shared
+app.delegate = appDelegate
 item.button?.image = menuBarIcon()
 setUpMenu()
 
@@ -26,5 +27,6 @@ Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
 }
 
 _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+DispatchQueue.main.async { app.showUpdateComplete() }  // once the app is running
 app.run()
 #endif
