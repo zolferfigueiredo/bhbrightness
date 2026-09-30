@@ -4,41 +4,55 @@ import ServiceManagement
 
 let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
+// `title` is the string's key, kept as the identifier so the item can be named again in another language.
 func menuItem(_ title: String, _ action: Selector?, key: String = "", symbol: String? = nil) -> NSMenuItem {
-    let mi = NSMenuItem(title: title, action: action, keyEquivalent: key)
+    let mi = NSMenuItem(title: tr(title), action: action, keyEquivalent: key)
+    mi.identifier = NSUserInterfaceItemIdentifier(title)
     mi.image = symbol.flatMap { NSImage(systemSymbolName: $0, accessibilityDescription: nil) }
     return mi
 }
 let menu = NSMenu()
 // Without Accessibility access BeeHan never sees the brightness keys, so the menu leads with a way to allow it.
-let accessItem = menuItem("Allow Accessibility access…", #selector(NSApplication.openAccessibilitySettings),
+let accessItem = menuItem("access", #selector(NSApplication.openAccessibilitySettings),
                           symbol: "exclamationmark.triangle")
 let accessLine = NSMenuItem.separator()
-let loginItem = menuItem("Launch at login", #selector(NSApplication.toggleLogin))
-let dockItem = menuItem("Keep in Dock", #selector(NSApplication.toggleDock))
-let checkItem = menuItem("Check for updates…", #selector(NSApplication.checkNow), symbol: "arrow.down.circle")
+// The globe is the website's language picker.
+let languageItem = menuItem("language", nil, symbol: "globe")
+let languages = NSMenu()
+let loginItem = menuItem("login", #selector(NSApplication.toggleLogin))
+let dockItem = menuItem("dock", #selector(NSApplication.toggleDock))
+let checkItem = menuItem("check", #selector(NSApplication.checkNow), symbol: "arrow.down.circle")
 let every = NSMenu()
-let autoItem = menuItem("Check automatically", nil)
+let autoItem = menuItem("auto", nil)
 
 // Fills in the menu and hangs it on the menu bar icon.
 func setUpMenu() {
-    for (seconds, title) in [(86400, "Daily"), (604800, "Weekly"), (0, "Never")] {
+    // Each language is named in itself, so it can always be found.
+    for language in Language.allCases {
+        let choice = NSMenuItem(title: "\(language.flag) \(language.name)", action: #selector(NSApplication.pickLanguage), keyEquivalent: "")
+        choice.representedObject = language.rawValue
+        languages.addItem(choice)
+    }
+    languageItem.submenu = languages
+    for (seconds, title) in [(86400, "daily"), (604800, "weekly"), (0, "never")] {
         let choice = menuItem(title, #selector(NSApplication.pickUpdateEvery))
         choice.tag = seconds
         every.addItem(choice)
     }
     autoItem.submenu = every
     autoItem.image = NSImage(size: NSSize(width: 16, height: 16)) // lines the title up with the icon rows
-    for mi in [accessItem, accessLine, loginItem, dockItem, .separator(),
-               menuItem("About BeeHan Brightness", #selector(NSApplication.showAbout), symbol: "info.circle"), .separator(),
+    for mi in [accessItem, accessLine, languageItem, .separator(), loginItem, dockItem, .separator(),
+               menuItem("about", #selector(NSApplication.showAbout), symbol: "info.circle"), .separator(),
                checkItem, autoItem, .separator(),
-               menuItem("Quit BeeHan Brightness", #selector(NSApplication.terminate(_:)), key: "q", symbol: "xmark.square")] {
+               menuItem("quit", #selector(NSApplication.terminate(_:)), key: "q", symbol: "xmark.square")] {
         menu.addItem(mi)
     }
     menu.autoenablesItems = false
     item.menu = menu
-    // The menu is built once, so its checkmarks are refreshed as it opens.
+    // The menu is built once, so its titles (the language may have changed) and checkmarks are refreshed as it opens.
     NotificationCenter.default.addObserver(forName: NSMenu.didBeginTrackingNotification, object: menu, queue: .main) { _ in
+        for mi in menu.items + every.items { if let key = mi.identifier?.rawValue { mi.title = tr(key) } }
+        for choice in languages.items { choice.state = choice.representedObject as? String == Language.current.rawValue ? .on : .off }
         accessItem.isHidden = AXIsProcessTrusted()
         accessLine.isHidden = accessItem.isHidden
         loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
@@ -51,7 +65,6 @@ func setUpMenu() {
             checkItem.image = updateAvailableIcon()
         } else {
             checkItem.attributedTitle = nil
-            checkItem.title = "Check for updates…"
             checkItem.image = NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: nil)
         }
         for choice in every.items { choice.state = defaults.integer(forKey: "updateEvery") == choice.tag ? .on : .off }
@@ -71,6 +84,12 @@ let appDelegate = AppDelegate()  // app.delegate doesn't retain it
 extension NSApplication {
     @objc func openAccessibilitySettings() {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+    }
+
+    @objc func pickLanguage(_ sender: NSMenuItem) {
+        defaults.set(sender.representedObject, forKey: "language")
+        about?.close()  // it was built in the old language
+        about = nil
     }
 
     @objc func toggleLogin() {

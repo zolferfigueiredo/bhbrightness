@@ -10,16 +10,16 @@ extension NSApplication {
             let name = NSTextField(labelWithString: "BeeHan Brightness")
             name.font = .boldSystemFont(ofSize: 16)
             let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
-            let site = NSButton(title: "Website", target: self, action: #selector(openSite))
+            let site = NSButton(title: tr("website"), target: self, action: #selector(openSite))
             site.isBordered = false
             site.contentTintColor = .linkColor
             let author = NSButton(title: "Zolfer Figueiredo", target: self, action: #selector(openAuthor))
             author.isBordered = false
             author.contentTintColor = .linkColor
-            let by = NSStackView(views: [NSTextField(labelWithString: "By"), author])
+            let by = NSStackView(views: [NSTextField(labelWithString: tr("by")), author])
             by.spacing = 3
             let text = NSStackView(views: [name, by,
-                                           NSTextField(labelWithString: "Version \(version)"), site])
+                                           NSTextField(labelWithString: tr("version", ["version": version])), site])
             text.orientation = .vertical
             text.setCustomSpacing(12, after: name)
             let logo = NSImageView(image: applicationIconImage)
