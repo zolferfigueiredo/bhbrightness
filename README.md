@@ -62,7 +62,7 @@ Run `./build.sh` again after editing.
 
 ## Code
 
-A Swift package: the app is in `Sources/BeeHanBrightness`, one file per part (`Dimming`, `Display`, `KeyTap`, `HUD`, `Menu`, `Language`, `Updates`, `Dock`, `About`), the text of each language is in `Strings`, and the tests are in `Tests`. `swift test` runs them; they also run on Linux in CI, since everything that needs AppKit is behind `#if canImport(AppKit)`.
+A Swift package: the app is in `Sources/BeeHanBrightness`, one file per part (`Dimming`, `Display`, `KeyTap`, `HUD`, `Menu`, `Language`, `Updates`, `Dock`, `About`), the text of each language is in `Strings`, and the tests are in `Tests`. `swift test` runs them; they also run on Linux in CI, since everything that needs AppKit is behind `#if canImport(AppKit)`. CI also runs shellcheck on the scripts, counts any compiler warning as an error, and fails a pull request that changes the app without raising `VERSION` in `build.sh`.
 
 ## Uninstall
 
