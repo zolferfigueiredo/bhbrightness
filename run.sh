@@ -33,4 +33,4 @@ EOF
 # Two instances would fight over gamma and the brightness keys.
 pkill -x "$NAME" || true
 # Run the binary itself, not through open: TCC then attributes Accessibility to the terminal, so grant it there.
-exec "$APP/Contents/MacOS/$NAME"
+exec "$APP/Contents/MacOS/$NAME" "$@"
