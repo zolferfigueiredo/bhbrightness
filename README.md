@@ -37,7 +37,7 @@ macOS stops at its lowest brightness step, the first segment of its brightness i
 ./build.sh
 ```
 
-The script runs the tests (`swift test`), builds the app, signs it, installs it to `/Applications/BeeHanBrightness.app` and launches it. It also packs the app into `dist/BeeHanBrightness-<version>-dev.dmg`, which is developer-signed and not notarized, so it is for this Mac only. `release.sh` makes the notarized DMG for sharing, using the version set in `build.sh`. `release.sh --url` also makes the permanent url.zolfer.com download link.
+The script runs the tests (`swift test`), builds the app, signs it, installs it to `/Applications/BeeHan Brightness.app` and launches it. It also packs the app into `dist/BeeHanBrightness-<version>-dev.dmg`, which is developer-signed and not notarized, so it is for this Mac only. `release.sh` makes the notarized DMG for sharing, using the version set in `build.sh`. `release.sh --url` also makes the permanent url.zolfer.com download link.
 
 For quick testing, `./run.sh` quits any running BeeHan, builds the app into `.build/` without installing or signing it, and runs it in the foreground. It starts the program inside the app directly rather than through `open`, so the Accessibility permission belongs to your terminal app; grant it there.
 
@@ -64,4 +64,4 @@ A Swift package: the app is in `Sources/BeeHanBrightness`, one file per part (`D
 
 ## Uninstall
 
-Quit from the pixel-art icon in the menu bar, delete `/Applications/BeeHanBrightness.app` and remove it from the Accessibility list.
+Quit from the pixel-art icon in the menu bar, delete `/Applications/BeeHan Brightness.app` and remove it from the Accessibility list.
