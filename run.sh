@@ -6,7 +6,8 @@ VERSION=$(sed -n 's/^VERSION=//p' build.sh)
 # A bundle, not a bare binary, so the Dock and About show the icon and version.
 APP=".build/$NAME.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-swiftc -O -swift-version 5 main.swift -o "$APP/Contents/MacOS/$NAME"
+swift build
+cp "$(swift build --show-bin-path)/$NAME" "$APP/Contents/MacOS/"
 # Same icon as build.sh.
 T=$(mktemp -d)
 mkdir "$T/AppIcon.iconset"

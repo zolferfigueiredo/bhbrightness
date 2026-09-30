@@ -2,15 +2,15 @@
 set -eu
 cd "$(dirname "$0")"
 NAME=BeeHanBrightness
-VERSION=1.0.22
+VERSION=1.1.0
 APP="/Applications/$NAME.app"
 
-swiftc -O -swift-version 5 main.swift -o "$NAME"
-./"$NAME" --selftest
+swift test
+swift build -c release
 
 if pkill -x "$NAME"; then sleep 1; fi
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-mv "$NAME" "$APP/Contents/MacOS/"
+cp "$(swift build -c release --show-bin-path)/$NAME" "$APP/Contents/MacOS/"
 # Same icon as release.sh; the About window shows it.
 T=$(mktemp -d)
 mkdir "$T/AppIcon.iconset"

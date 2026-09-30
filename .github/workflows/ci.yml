@@ -9,5 +9,5 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
-      - run: shellcheck build.sh release.sh .githooks/pre-commit
-      - run: swiftc -O -swift-version 5 main.swift -o selftest && ./selftest --selftest
+      - run: shellcheck build.sh release.sh run.sh .githooks/pre-commit
+      - run: swift test

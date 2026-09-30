@@ -10,12 +10,14 @@ DMG="dist/$NAME-$VERSION.dmg"
 
 rm -rf dist
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" dist/AppIcon.iconset
-for arch in arm64 x86_64; do
-  swiftc -O -swift-version 5 -target $arch-apple-macos13 main.swift -o "dist/$NAME-$arch"
-done
-lipo -create "dist/$NAME-arm64" "dist/$NAME-x86_64" -output "$APP/Contents/MacOS/$NAME"
-rm "dist/$NAME-arm64" "dist/$NAME-x86_64"
-"$APP/Contents/MacOS/$NAME" --selftest
+# A clean build in /tmp, gone when this script ends.
+WORK=$(mktemp -d /tmp/beehan.XXXXXX)
+trap 'rm -rf "$WORK"' EXIT
+swift test --scratch-path "$WORK"
+# One universal binary for Apple silicon and Intel.
+universal() { swift build -c release --arch arm64 --arch x86_64 --scratch-path "$WORK" "$@"; }
+universal
+cp "$(universal --show-bin-path)/$NAME" "$APP/Contents/MacOS/"
 
 # icon.svg is full-bleed for the README; app icons leave a margin around the rounded square.
 sed 's/viewBox="0 0 48 48"/viewBox="-6 -6 60 60"/' icon.svg > dist/icon.svg

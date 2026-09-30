@@ -1,0 +1,30 @@
+#if canImport(AppKit)
+import AppKit
+
+let app = NSApplication.shared
+item.button?.image = menuBarIcon()
+setUpMenu()
+
+defaults.register(defaults: ["updateEvery": 604800])
+let updates = Timer(timeInterval: 3600, target: app, selector: #selector(NSApplication.autoCheck), userInfo: nil, repeats: true)
+updates.tolerance = 600
+RunLoop.main.add(updates, forMode: .common)
+app.autoCheck()
+
+NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: nil) { _ in
+    if depth > 0, let d = builtin() { gamma(d, 1) }
+}
+
+// ponytail: one 1 s poll covers trust and gamma resets; move to notifications if it ever costs anything.
+Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+    // An untrusted tap is still created, with its events silently dropped, so gate on trust.
+    if tap == nil, AXIsProcessTrusted() { startTap() }
+    guard depth > 0, let d = builtin() else { return }
+    // Raised elsewhere: leave sub-zero. Uses step(): just after a held F1 crosses in, macOS's fade still reads above dot.
+    if let b = backlight(d), step(b) > dot { depth = 0; gamma(d, 1) }
+    else if abs(gammaTop(d) - dims[depth - 1]) > 0.01 { gamma(d, dims[depth - 1]) } // macOS resets gamma on wake and display changes
+}
+
+_ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+app.run()
+#endif

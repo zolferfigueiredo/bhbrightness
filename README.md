@@ -27,7 +27,7 @@ macOS stops at its lowest brightness step, the first segment of its brightness i
 ## Requirements
 
 - A MacBook with a built-in display
-- Xcode command line tools (`swiftc`)
+- Xcode 16 or later (Swift 6)
 - An "Apple Development" signing certificate
 - Accessibility permission, needed to catch the brightness keys
 
@@ -37,7 +37,7 @@ macOS stops at its lowest brightness step, the first segment of its brightness i
 ./build.sh
 ```
 
-The script compiles `main.swift`, runs the built-in self-test, signs the app, installs it to `/Applications/BeeHanBrightness.app` and launches it. It also packs the app into `dist/BeeHanBrightness-<version>-dev.dmg`, which is developer-signed and not notarized, so it is for this Mac only. `release.sh` makes the notarized DMG for sharing, using the version set in `build.sh`. `release.sh --url` also makes the permanent url.zolfer.com download link.
+The script runs the tests (`swift test`), builds the app, signs it, installs it to `/Applications/BeeHanBrightness.app` and launches it. It also packs the app into `dist/BeeHanBrightness-<version>-dev.dmg`, which is developer-signed and not notarized, so it is for this Mac only. `release.sh` makes the notarized DMG for sharing, using the version set in `build.sh`. `release.sh --url` also makes the permanent url.zolfer.com download link.
 
 For quick testing, `./run.sh` quits any running BeeHan, builds the app into `.build/` without installing or signing it, and runs it in the foreground. It starts the program inside the app directly rather than through `open`, so the Accessibility permission belongs to your terminal app; grant it there.
 
@@ -51,12 +51,16 @@ Click the menu bar icon for Launch at login, Keep in Dock, About (version and we
 
 ## Tuning
 
-Two values at the top of `main.swift` control the feel:
+Two values in [Dimming.swift](Sources/BeeHanBrightness/Dimming.swift) control the feel:
 
 - `dot` is the backlight level held during sub-zero dimming (macOS's lowest step, `1/16`).
 - `dims` is the darkening per sub-zero step, `0.9^n` for 16 steps. Change the base or the count to go deeper or finer.
 
 Run `./build.sh` again after editing.
+
+## Code
+
+A Swift package: the app is in `Sources/BeeHanBrightness`, one file per part (`Dimming`, `Display`, `KeyTap`, `HUD`, `Menu`, `Updates`, `Dock`, `About`), and the tests are in `Tests`. `swift test` runs them; they also run on Linux in CI, since everything that needs AppKit is behind `#if canImport(AppKit)`.
 
 ## Uninstall
 
