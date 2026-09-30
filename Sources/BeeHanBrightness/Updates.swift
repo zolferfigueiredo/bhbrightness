@@ -14,7 +14,7 @@ import AppKit
 
 let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
 let defaults = UserDefaults.standard
-// Launch argument `-updateSite http://localhost:8022/` tests against the website's run.sh.
+// Launch argument `-updateSite http://localhost:8020/` tests against the website's run.sh.
 let site = URL(string: defaults.string(forKey: "updateSite") ?? "https://bhb.zolfer.com/")!
 
 // The site names the DMG after the version, the same rule its deploy.sh uses.
