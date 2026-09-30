@@ -10,6 +10,10 @@ func menuItem(_ title: String, _ action: Selector?, key: String = "", symbol: St
     return mi
 }
 let menu = NSMenu()
+// Without Accessibility access BeeHan never sees the brightness keys, so the menu leads with a way to allow it.
+let accessItem = menuItem("Allow Accessibility access…", #selector(NSApplication.openAccessibilitySettings),
+                          symbol: "exclamationmark.triangle")
+let accessLine = NSMenuItem.separator()
 let loginItem = menuItem("Launch at login", #selector(NSApplication.toggleLogin))
 let dockItem = menuItem("Keep in Dock", #selector(NSApplication.toggleDock))
 let checkItem = menuItem("Check for updates…", #selector(NSApplication.checkNow), symbol: "arrow.down.circle")
@@ -25,7 +29,7 @@ func setUpMenu() {
     }
     autoItem.submenu = every
     autoItem.image = NSImage(size: NSSize(width: 16, height: 16)) // lines the title up with the icon rows
-    for mi in [loginItem, dockItem, .separator(),
+    for mi in [accessItem, accessLine, loginItem, dockItem, .separator(),
                menuItem("About BeeHan Brightness", #selector(NSApplication.showAbout), symbol: "info.circle"), .separator(),
                checkItem, autoItem, .separator(),
                menuItem("Quit BeeHan Brightness", #selector(NSApplication.terminate(_:)), key: "q", symbol: "xmark.square")] {
@@ -35,6 +39,8 @@ func setUpMenu() {
     item.menu = menu
     // The menu is built once, so its checkmarks are refreshed as it opens.
     NotificationCenter.default.addObserver(forName: NSMenu.didBeginTrackingNotification, object: menu, queue: .main) { _ in
+        accessItem.isHidden = AXIsProcessTrusted()
+        accessLine.isHidden = accessItem.isHidden
         loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
         // Registering from anywhere else (a build folder) would point the login item at a bundle that disappears.
         loginItem.isEnabled = Bundle.main.bundlePath.hasPrefix("/Applications/")
@@ -63,6 +69,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 let appDelegate = AppDelegate()  // app.delegate doesn't retain it
 
 extension NSApplication {
+    @objc func openAccessibilitySettings() {
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+    }
+
     @objc func toggleLogin() {
         let service = SMAppService.mainApp
         do {
