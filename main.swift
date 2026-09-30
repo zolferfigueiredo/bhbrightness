@@ -276,7 +276,7 @@ func showHUD(_ d: CGDirectDisplayID, filled: Int) {
 
 let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
 let defaults = UserDefaults.standard
-// Launch argument `-updateSite http://localhost:8022/` tests against the website's run.sh.
+// Launch argument `-updateSite http://localhost:8020/` tests against the website's run.sh.
 let site = URL(string: defaults.string(forKey: "updateSite") ?? "https://bhb.zolfer.com/")!
 
 // The site names the DMG after the version, the same rule its deploy.sh uses.
@@ -374,7 +374,7 @@ var checking = false // an update check or install is running
 var about: NSWindow?
 extension NSApplication {
     @objc func openSite() { NSWorkspace.shared.open(URL(string: "https://bhb.zolfer.com/")!) }
-    @objc func openAuthor() { NSWorkspace.shared.open(URL(string: "http://zolfer.com/")!) }
+    @objc func openAuthor() { NSWorkspace.shared.open(URL(string: "https://zolfer.com/")!) }
     @objc func showAbout() {
         if about == nil {
             let name = NSTextField(labelWithString: "BeeHan Brightness")
