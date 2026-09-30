@@ -76,12 +76,19 @@ func bitmap(_ grid: [String], scale: Int) -> NSBitmapImageRep {
     return rep
 }
 
-// The menu bar icon, from the two bitmaps above.
+// The menu bar icon, from the two bitmaps above, painted in labelColor as it is drawn: white on a dark
+// menu bar, black on a light one. Not a template: on the menu bars of the displays not in use macOS
+// shows a template's copy at about 15% opacity, and anything else at about 60%, like its own icons.
 func menuBarIcon() -> NSImage {
-    let icon = NSImage(size: NSSize(width: logo1x[0].count, height: logo1x.count))
-    icon.addRepresentation(bitmap(logo1x, scale: 1))
-    icon.addRepresentation(bitmap(logo2x.map { ".." + $0 + ".." }, scale: 2)) // padded to the 1x width
-    icon.isTemplate = true // macOS tints it: white on a dark menu bar, black on a light one
+    let mask = NSImage(size: NSSize(width: logo1x[0].count, height: logo1x.count))
+    mask.addRepresentation(bitmap(logo1x, scale: 1))
+    mask.addRepresentation(bitmap(logo2x.map { ".." + $0 + ".." }, scale: 2)) // padded to the 1x width
+    let icon = NSImage(size: mask.size, flipped: false) { rect in
+        mask.draw(in: rect)
+        NSColor.labelColor.set()
+        rect.fill(using: .sourceIn)
+        return true
+    }
     icon.accessibilityDescription = "BeeHan Brightness"
     return icon
 }
