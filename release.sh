@@ -65,8 +65,10 @@ rm dist/background.svg dist/bg1.png dist/bg2.png
 codesign --force --options runtime --timestamp --sign "$ID" "$APP"
 ln -s /Applications dist/dmg/Applications
 
-# Finder addresses the volume by name, so a mounted older copy would get the layout instead.
-[ ! -e "/Volumes/$APPNAME" ] || { echo "Eject /Volumes/$APPNAME first." >&2; exit 1; }
+# Finder addresses the volume by name, so a mounted older copy would get the layout instead: eject
+# every one first ("BeeHan Brightness", "BeeHan Brightness 1"...).
+mount | { grep -i " on /Volumes/$APPNAME" || true; } | sed 's|^.* on \(/Volumes/[^(]*\) (.*|\1|' |
+    while IFS= read -r volume; do hdiutil detach -quiet -force "$volume"; done
 hdiutil create -volname "$APPNAME" -srcfolder dist/dmg -format UDRW dist/rw.dmg
 hdiutil attach -noverify -noautoopen dist/rw.dmg >/dev/null
 osascript <<EOF
