@@ -83,6 +83,10 @@ final class UpdateProgress: NSObject {
     // alive: held only by a local variable, it was gone by the time Reopen was clicked.
     private static var open: UpdateProgress?
 
+    // What the update underway says it is doing, nil when there is none. The window stays up until
+    // Reopen, so an installed update counts too: nothing may start a second install meanwhile.
+    static var underway: String? { open?.status.stringValue }
+
     init(_ title: String) {
         super.init()
         let heading = NSTextField(labelWithString: title)
@@ -253,7 +257,7 @@ extension NSApplication {
 
     // Quiet checks only speak up when there is a new version.
     func checkForUpdates(quiet: Bool) {
-        guard !checking else { return }
+        guard !checking, UpdateProgress.underway == nil else { return }
         checking = true
         Task { @MainActor in
             defer { checking = false }
