@@ -4,7 +4,7 @@ import AppKit
 var about: NSWindow?
 extension NSApplication {
     @objc func openSite() { NSWorkspace.shared.open(URL(string: "https://bhb.zolfer.com/")!) }
-    @objc func openAuthor() { NSWorkspace.shared.open(URL(string: "http://zolfer.com/")!) }
+    @objc func openAuthor() { NSWorkspace.shared.open(URL(string: "https://zolfer.com/")!) }
     @objc func showAbout() {
         if about == nil {
             let name = NSTextField(labelWithString: "BeeHan Brightness")

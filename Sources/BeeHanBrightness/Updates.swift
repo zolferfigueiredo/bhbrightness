@@ -14,7 +14,7 @@ import AppKit
 
 let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
 let defaults = UserDefaults.standard
-// Launch argument `-updateSite http://localhost:8022/` tests against the website's run.sh.
+// Launch argument `-updateSite http://localhost:8020/` tests against the website's run.sh.
 let site = URL(string: defaults.string(forKey: "updateSite") ?? "https://bhb.zolfer.com/")!
 
 // The site names the DMG after the version, the same rule its deploy.sh uses.
@@ -80,9 +80,9 @@ func install(_ version: String) async throws {
     let mount = work.appending(path: "mount")
     try files.createDirectory(at: mount, withIntermediateDirectories: true)
     try await run("/usr/bin/hdiutil", "attach", dmg.path, "-nobrowse", "-readonly", "-noautoopen", "-mountpoint", mount.path)
-    let fresh = work.appending(path: "BeeHanBrightness.app")
+    let fresh = work.appending(path: "BeeHan Brightness.app")
     do {
-        try await run("/usr/bin/ditto", mount.appending(path: "BeeHanBrightness.app").path, fresh.path)
+        try await run("/usr/bin/ditto", mount.appending(path: "BeeHan Brightness.app").path, fresh.path)
     } catch {
         try? await run("/usr/bin/hdiutil", "detach", mount.path, "-force")
         throw error
