@@ -30,5 +30,6 @@ Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
 
 _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
 DispatchQueue.main.async { app.showUpdateComplete() }  // once the app is running
+if defaults.bool(forKey: "testNotifications") { Task { _ = await showUpdateNotification(nextPatch(appVersion)) } }
 app.run()
 #endif

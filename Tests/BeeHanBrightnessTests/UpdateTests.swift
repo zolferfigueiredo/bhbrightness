@@ -13,6 +13,12 @@ func newerVersion(remote: String, local: String, expected: Bool) {
     #expect(isNewer(remote, than: local) == expected)
 }
 
+@Test func nextPatchVersion() {
+    #expect(nextPatch("1.1.4") == "1.1.5")
+    #expect(nextPatch("0.9") == "0.10")
+    #expect(nextPatch("?") == "1")  // appVersion when the bundle has none
+}
+
 @Test func updateCheckSchedule() {
     let now = Date(), hour: TimeInterval = 3600, day = 24 * hour
     #expect(updateCheckIsDue(last: nil, every: day, now: now))

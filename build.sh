@@ -3,7 +3,7 @@ set -eu
 cd "$(dirname "$0")"
 NAME=BeeHanBrightness
 APPNAME="BeeHan Brightness"  # the app as you see it; NAME stays the program inside it and the DMG file
-VERSION=1.1.4
+VERSION=1.1.5
 APP="/Applications/$APPNAME.app"
 
 swift test

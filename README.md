@@ -39,7 +39,7 @@ macOS stops at its lowest brightness step, the first segment of its brightness i
 
 The script runs the tests (`swift test`), builds the app, signs it, installs it to `/Applications/BeeHan Brightness.app` and launches it. It also packs the app into `dist/BeeHanBrightness-<version>-dev.dmg`, which is developer-signed and not notarized, so it is for this Mac only. `release.sh` makes the notarized DMG for sharing, using the version set in `build.sh`. `release.sh --url` also makes the permanent url.zolfer.com download link.
 
-For quick testing, `./run.sh` quits any running BeeHan, builds the app into `.build/` without installing or signing it, and runs it in the foreground. It starts the program inside the app directly rather than through `open`, so the Accessibility permission belongs to your terminal app; grant it there.
+For quick testing, `./run.sh` quits any running BeeHan, builds the app into `.build/` without installing or signing it, and runs it in the foreground. It starts the program inside the app directly rather than through `open`, so the Accessibility permission belongs to your terminal app; grant it there. `./run.sh -testNotifications YES` also shows the update notification, offering the next version, to check how it reads; the installed app does the same with `open -a "BeeHan Brightness" --args -testNotifications YES` once quit.
 
 On first launch macOS asks for Accessibility access. Allow it in System Settings > Privacy & Security > Accessibility. BeeHan starts listening within a second, no relaunch needed. Until access is allowed, the menu starts with **Allow Accessibility access…**, which opens that page. Signing with a certificate (not ad-hoc) keeps the permission across rebuilds.
 
