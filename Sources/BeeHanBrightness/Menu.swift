@@ -40,9 +40,27 @@ func setUpMenu() {
         loginItem.isEnabled = Bundle.main.bundlePath.hasPrefix("/Applications/")
         dockItem.state = inDock() ? .on : .off
         checkItem.isEnabled = !checking
+        if let version = availableUpdate() {
+            checkItem.attributedTitle = updateAvailableTitle(version)
+            checkItem.image = updateAvailableIcon()
+        } else {
+            checkItem.attributedTitle = nil
+            checkItem.title = "Check for updates…"
+            checkItem.image = NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: nil)
+        }
         for choice in every.items { choice.state = defaults.integer(forKey: "updateEvery") == choice.tag ? .on : .off }
     }
 }
+
+// Opening the app again (its Dock shortcut, Spotlight, Finder) shows the menu at the pointer.
+// That also reaches it when the notch hides the menu bar icon.
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
+        return false
+    }
+}
+let appDelegate = AppDelegate()  // app.delegate doesn't retain it
 
 extension NSApplication {
     @objc func toggleLogin() {
