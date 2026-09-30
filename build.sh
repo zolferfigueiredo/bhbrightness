@@ -2,15 +2,16 @@
 set -eu
 cd "$(dirname "$0")"
 NAME=BeeHanBrightness
-VERSION=1.0.22
-APP="/Applications/$NAME.app"
+APPNAME="BeeHan Brightness"  # the app as you see it; NAME stays the program inside it and the DMG file
+VERSION=1.1.0
+APP="/Applications/$APPNAME.app"
 
-swiftc -O -swift-version 5 main.swift -o "$NAME"
-./"$NAME" --selftest
+swift test
+swift build -c release
 
 if pkill -x "$NAME"; then sleep 1; fi
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-mv "$NAME" "$APP/Contents/MacOS/"
+cp "$(swift build -c release --show-bin-path)/$NAME" "$APP/Contents/MacOS/"
 # Same icon as release.sh; the About window shows it.
 T=$(mktemp -d)
 mkdir "$T/AppIcon.iconset"
@@ -23,7 +24,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
   <key>CFBundleIdentifier</key><string>local.beehanbrightness</string>
-  <key>CFBundleName</key><string>$NAME</string>
+  <key>CFBundleName</key><string>$APPNAME</string>
   <key>CFBundleExecutable</key><string>$NAME</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
@@ -40,7 +41,7 @@ STAGE=$(mktemp -d)
 cp -R "$APP" "$STAGE/"
 ln -s /Applications "$STAGE/Applications"
 mkdir -p dist
-hdiutil create -volname "$NAME" -srcfolder "$STAGE" -format UDZO -ov "dist/$NAME-$VERSION-dev.dmg" >/dev/null
+hdiutil create -volname "$APPNAME" -srcfolder "$STAGE" -format UDZO -ov "dist/$NAME-$VERSION-dev.dmg" >/dev/null
 rm -rf "$STAGE"
 
 # Launch through LaunchServices: running the bare binary makes TCC attribute it to Terminal.

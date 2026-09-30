@@ -2,11 +2,13 @@
 set -eu
 cd "$(dirname "$0")"
 NAME=BeeHanBrightness
+APPNAME="BeeHan Brightness"  # the app as you see it; NAME stays the program inside it and the DMG file
 VERSION=$(sed -n 's/^VERSION=//p' build.sh)
 # A bundle, not a bare binary, so the Dock and About show the icon and version.
-APP=".build/$NAME.app"
+APP=".build/$APPNAME.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-swiftc -O -swift-version 5 main.swift -o "$APP/Contents/MacOS/$NAME"
+swift build
+cp "$(swift build --show-bin-path)/$NAME" "$APP/Contents/MacOS/"
 # Same icon as build.sh.
 T=$(mktemp -d)
 mkdir "$T/AppIcon.iconset"
@@ -19,7 +21,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
   <key>CFBundleIdentifier</key><string>local.beehanbrightness</string>
-  <key>CFBundleName</key><string>$NAME</string>
+  <key>CFBundleName</key><string>$APPNAME</string>
   <key>CFBundleExecutable</key><string>$NAME</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>

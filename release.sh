@@ -3,19 +3,22 @@
 set -eu
 cd "$(dirname "$0")"
 NAME=BeeHanBrightness
+APPNAME="BeeHan Brightness"  # the app as you see it; NAME stays the program inside it and the DMG file
 VERSION=$(sed -n 's/^VERSION=//p' build.sh)
 ID="Developer ID Application: Zolfer Figueiredo (497V6MCDS8)"
-APP="dist/dmg/$NAME.app"
+APP="dist/dmg/$APPNAME.app"
 DMG="dist/$NAME-$VERSION.dmg"
 
 rm -rf dist
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" dist/AppIcon.iconset
-for arch in arm64 x86_64; do
-  swiftc -O -swift-version 5 -target $arch-apple-macos13 main.swift -o "dist/$NAME-$arch"
-done
-lipo -create "dist/$NAME-arm64" "dist/$NAME-x86_64" -output "$APP/Contents/MacOS/$NAME"
-rm "dist/$NAME-arm64" "dist/$NAME-x86_64"
-"$APP/Contents/MacOS/$NAME" --selftest
+# A clean build in /tmp, gone when this script ends.
+WORK=$(mktemp -d /tmp/beehan.XXXXXX)
+trap 'rm -rf "$WORK"' EXIT
+swift test --scratch-path "$WORK"
+# One universal binary for Apple silicon and Intel.
+universal() { swift build -c release --arch arm64 --arch x86_64 --scratch-path "$WORK" "$@"; }
+universal
+cp "$(universal --show-bin-path)/$NAME" "$APP/Contents/MacOS/"
 
 # icon.svg is full-bleed for the README; app icons leave a margin around the rounded square.
 sed 's/viewBox="0 0 48 48"/viewBox="-6 -6 60 60"/' icon.svg > dist/icon.svg
@@ -28,7 +31,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
   <key>CFBundleIdentifier</key><string>com.zolfer.beehanbrightness</string>
-  <key>CFBundleName</key><string>$NAME</string>
+  <key>CFBundleName</key><string>$APPNAME</string>
   <key>CFBundleExecutable</key><string>$NAME</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
@@ -50,7 +53,7 @@ cat > dist/background.svg <<EOF
 <path d="M236 166C266 124 330 120 362 152"/><path d="M349 151.5h13.5v-13.5"/>
 </g>
 <g font-family=".AppleSystemUIFont" font-size="16" fill="#f5f5f7" fill-opacity=".85" text-anchor="middle">
-<text x="170" y="250">$NAME.app</text><text x="430" y="250">Applications</text>
+<text x="170" y="250">$APPNAME.app</text><text x="430" y="250">Applications</text>
 </g>
 </svg>
 EOF
@@ -63,12 +66,12 @@ codesign --force --options runtime --timestamp --sign "$ID" "$APP"
 ln -s /Applications dist/dmg/Applications
 
 # Finder addresses the volume by name, so a mounted older copy would get the layout instead.
-[ ! -e "/Volumes/$NAME" ] || { echo "Eject /Volumes/$NAME first." >&2; exit 1; }
-hdiutil create -volname "$NAME" -srcfolder dist/dmg -format UDRW dist/rw.dmg
+[ ! -e "/Volumes/$APPNAME" ] || { echo "Eject /Volumes/$APPNAME first." >&2; exit 1; }
+hdiutil create -volname "$APPNAME" -srcfolder dist/dmg -format UDRW dist/rw.dmg
 hdiutil attach -noverify -noautoopen dist/rw.dmg >/dev/null
 osascript <<EOF
 tell application "Finder"
-  tell disk "$NAME"
+  tell disk "$APPNAME"
     open
     set current view of container window to icon view
     set toolbar visible of container window to false
@@ -78,17 +81,17 @@ tell application "Finder"
     set arrangement of opts to not arranged
     set icon size of opts to 100
     set text size of opts to 10
-    set background picture of opts to file "$NAME.app:Contents:Resources:dmg-background.tiff"
-    set position of item "$NAME.app" to {170, 160}
+    set background picture of opts to file "$APPNAME.app:Contents:Resources:dmg-background.tiff"
+    set position of item "$APPNAME.app" to {170, 160}
     set position of item "Applications" to {430, 160}
     close
   end tell
 end tell
 EOF
-until [ -f "/Volumes/$NAME/.DS_Store" ]; do sleep 1; done
-rm -rf "/Volumes/$NAME/.fseventsd" "/Volumes/$NAME/.Trashes"
+until [ -f "/Volumes/$APPNAME/.DS_Store" ]; do sleep 1; done
+rm -rf "/Volumes/$APPNAME/.fseventsd" "/Volumes/$APPNAME/.Trashes"
 sync
-hdiutil detach "/Volumes/$NAME" >/dev/null
+hdiutil detach "/Volumes/$APPNAME" >/dev/null
 hdiutil convert dist/rw.dmg -format UDZO -o "$DMG"
 rm dist/rw.dmg
 codesign --timestamp --sign "$ID" "$DMG"
