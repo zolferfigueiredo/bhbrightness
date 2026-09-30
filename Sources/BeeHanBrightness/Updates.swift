@@ -48,8 +48,8 @@ func relaunchWhenQuit() throws {
 // "Update available!" over "Install version 1.1.1 now", for the menu item that replaces Check for updates.
 func updateAvailableTitle(_ version: String) -> NSAttributedString {
     let bold = NSFontManager.shared.convert(NSFont.menuFont(ofSize: 0), toHaveTrait: .boldFontMask)
-    let title = NSMutableAttributedString(string: "Update available!\n", attributes: [.font: bold])
-    title.append(NSAttributedString(string: "Install version \(version) now",
+    let title = NSMutableAttributedString(string: tr("update_available") + "\n", attributes: [.font: bold])
+    title.append(NSAttributedString(string: tr("install_now", ["version": version]),
                                     attributes: [.font: NSFont.menuFont(ofSize: NSFont.smallSystemFontSize),
                                                  .foregroundColor: NSColor.secondaryLabelColor]))
     return title
@@ -57,7 +57,7 @@ func updateAvailableTitle(_ version: String) -> NSAttributedString {
 
 // The filled download arrow in the accent color, so the item stands out.
 func updateAvailableIcon() -> NSImage? {
-    NSImage(systemSymbolName: "arrow.down.circle.fill", accessibilityDescription: "Update available")?
+    NSImage(systemSymbolName: "arrow.down.circle.fill", accessibilityDescription: tr("update_available"))?
         .withSymbolConfiguration(.init(paletteColors: [.controlAccentColor]))
 }
 
@@ -71,7 +71,7 @@ final class UpdateProgress: NSObject {
     private let window = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: false)
     private let status = NSTextField(labelWithString: "")
     private let bar = NSProgressIndicator()
-    private let reopen = NSButton(title: "Reopen", target: nil, action: nil)
+    private let reopen = NSButton(title: tr("reopen"), target: nil, action: nil)
     // The window outlives the code that started the update, and its Reopen button needs this object
     // alive: held only by a local variable, it was gone by the time Reopen was clicked.
     private static var open: UpdateProgress?
@@ -141,7 +141,7 @@ final class UpdateProgress: NSObject {
             try relaunchWhenQuit()
             NSApp.terminate(nil)
         } catch {
-            status.stringValue = "Couldn't reopen: \(error.localizedDescription) Quit and open it yourself."
+            status.stringValue = tr("reopen_failed", ["error": error.localizedDescription])
         }
     }
 }
@@ -153,8 +153,8 @@ func notifyUpdate(_ version: String) async -> Bool {
     let center = UNUserNotificationCenter.current()
     guard (try? await center.requestAuthorization(options: [.alert, .sound])) == true else { return false }
     let content = UNMutableNotificationContent()
-    content.title = "BeeHan Brightness \(version) is available"
-    content.body = "You have \(appVersion). Click to update."
+    content.title = tr("available", ["version": version])
+    content.body = tr("click_to_update", ["version": appVersion])
     content.sound = .default
     guard (try? await center.add(UNNotificationRequest(identifier: "update", content: content, trigger: nil))) != nil else { return false }
     defaults.set(version, forKey: "notifiedVersion")
@@ -168,11 +168,11 @@ func install(_ version: String, step: @MainActor (String) -> Void) async throws 
     let work = try files.url(for: .itemReplacementDirectory, in: .userDomainMask, appropriateFor: Bundle.main.bundleURL, create: true)
     defer { try? files.removeItem(at: work) }
 
-    await step("Downloading version \(version)…")
+    await step(tr("downloading", ["version": version]))
     let (download, response) = try await URLSession.shared.download(from: dmgURL(version))
     let dmg = work.appending(path: "update.dmg")
     try files.moveItem(at: download, to: dmg)
-    guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw UpdateError(errorDescription: "The download failed.") }
+    guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw UpdateError(errorDescription: tr("download_failed")) }
 
     let mount = work.appending(path: "mount")
     try files.createDirectory(at: mount, withIntermediateDirectories: true)
@@ -186,18 +186,18 @@ func install(_ version: String, step: @MainActor (String) -> Void) async throws 
     }
     try? await run("/usr/bin/hdiutil", "detach", mount.path, "-force")
 
-    await step("Checking the signature…")
+    await step(tr("checking_signature"))
     do {
         try await run("/usr/bin/codesign", "--verify", "--strict", "-R" + teamRequirement, fresh.path)
     } catch {
-        throw UpdateError(errorDescription: "The download isn't signed by Zolfer Figueiredo.")
+        throw UpdateError(errorDescription: tr("not_signed"))
     }
     let info = Bundle(url: fresh)?.infoDictionary
     guard info?["CFBundleIdentifier"] as? String == Bundle.main.bundleIdentifier,
           info?["CFBundleShortVersionString"] as? String == version else {
-        throw UpdateError(errorDescription: "The download isn't BeeHan Brightness \(version).")
+        throw UpdateError(errorDescription: tr("wrong_download", ["version": version]))
     }
-    await step("Installing…")
+    await step(tr("installing"))
     _ = try files.replaceItemAt(Bundle.main.bundleURL, withItemAt: fresh)
 }
 
@@ -210,7 +210,7 @@ func run(_ tool: String, _ arguments: String...) async throws {
     try await withCheckedThrowingContinuation { (done: CheckedContinuation<Void, Error>) in
         process.terminationHandler = { process in
             if process.terminationStatus == 0 { done.resume() }
-            else { done.resume(throwing: UpdateError(errorDescription: "\((tool as NSString).lastPathComponent) failed (\(process.terminationStatus)).")) }
+            else { done.resume(throwing: UpdateError(errorDescription: tr("tool_failed", ["tool": (tool as NSString).lastPathComponent, "code": process.terminationStatus]))) }
         }
         do { try process.run() } catch { done.resume(throwing: error) }
     }
@@ -236,7 +236,7 @@ extension NSApplication {
         guard let version = defaults.string(forKey: "updatedTo") else { return }
         defaults.removeObject(forKey: "updatedTo")
         guard version == appVersion else { return }
-        alert("Update complete!", "You're now using BeeHan Brightness \(appVersion), the newest version available.", "OK")
+        alert(tr("update_complete"), tr("now_using", ["version": appVersion]), tr("ok"))
     }
 
     // Quiet checks only speak up when there is a new version.
@@ -247,30 +247,30 @@ extension NSApplication {
             defer { checking = false }
             guard let latest = await latestVersion() else {
                 print("update check failed")
-                if !quiet { alert("Couldn't check for updates", "Check your connection and try again.") }
+                if !quiet { alert(tr("check_failed"), tr("check_connection"), tr("ok")) }
                 return
             }
             defaults.set(Date(), forKey: "lastUpdateCheck")
             defaults.set(latest, forKey: "availableVersion")
             guard isNewer(latest, than: appVersion) else {
-                if !quiet { alert("You're up to date!", "BeeHan Brightness \(appVersion) is currently the newest version available.", "OK") }
+                if !quiet { alert(tr("up_to_date"), tr("newest", ["version": appVersion]), tr("ok")) }
                 return
             }
             if quiet, await notifyUpdate(latest) { return }
-            guard alert("BeeHan Brightness \(latest) is available", "You have \(appVersion). Update now?", "Update Now", "Later") else { return }
-            let progress = UpdateProgress("Updating BeeHan Brightness to \(latest)")
+            guard alert(tr("available", ["version": latest]), tr("update_question", ["version": appVersion]), tr("update_now"), tr("later")) else { return }
+            let progress = UpdateProgress(tr("updating_to", ["version": latest]))
             do {
                 guard Bundle.main.bundlePath.hasPrefix("/Applications/") else {
-                    throw UpdateError(errorDescription: "BeeHan Brightness updates itself only when it runs from the Applications folder.")
+                    throw UpdateError(errorDescription: tr("applications_only"))
                 }
                 progress.show()
                 try await install(latest) { progress.step($0) }
                 defaults.set(latest, forKey: "updatedTo")
-                progress.done("Version \(latest) is installed.")
+                progress.done(tr("installed", ["version": latest]))
             } catch {
                 progress.close()
                 print("update: \(error.localizedDescription)")
-                if alert("Couldn't install the update", error.localizedDescription, "Download", "Cancel") {
+                if alert(tr("update_failed"), error.localizedDescription, tr("download"), tr("cancel")) {
                     NSWorkspace.shared.open(dmgURL(latest))
                 }
             }

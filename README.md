@@ -45,7 +45,9 @@ On first launch macOS asks for Accessibility access. Allow it in System Settings
 
 To start it at login, turn on **Launch at login** in the menu.
 
-Click the menu bar icon for Launch at login, Keep in Dock, About (version and website), Check for updates…, Check automatically (daily, weekly by default, or never) and Quit.
+Click the menu bar icon for Language, Launch at login, Keep in Dock, About (version and website), Check for updates…, Check automatically (daily, weekly by default, or never) and Quit.
+
+BeeHan speaks 12 languages: Deutsch, English, Español, Français, Italiano, Polski, Português, Русский, Українська, 中文, 日本語 and 한국어. It starts in your Mac's language (English when it speaks none of those), and **Language** in the menu changes it.
 
 **Check for updates…** asks bhb.zolfer.com for `latest.json`, a plain download that sends nothing about you. When there is a newer version, **Update Now** downloads it, checks it is signed by you and replaces the copy in Applications, showing each step and a loading bar; **Reopen** then starts the new version. When an automatic check finds a new version, a notification says so once; clicking it offers Update Now. BeeHan needs macOS 13 or later.
 
@@ -60,7 +62,7 @@ Run `./build.sh` again after editing.
 
 ## Code
 
-A Swift package: the app is in `Sources/BeeHanBrightness`, one file per part (`Dimming`, `Display`, `KeyTap`, `HUD`, `Menu`, `Updates`, `Dock`, `About`), and the tests are in `Tests`. `swift test` runs them; they also run on Linux in CI, since everything that needs AppKit is behind `#if canImport(AppKit)`.
+A Swift package: the app is in `Sources/BeeHanBrightness`, one file per part (`Dimming`, `Display`, `KeyTap`, `HUD`, `Menu`, `Language`, `Updates`, `Dock`, `About`), the text of each language is in `Strings`, and the tests are in `Tests`. `swift test` runs them; they also run on Linux in CI, since everything that needs AppKit is behind `#if canImport(AppKit)`.
 
 ## Uninstall
 
