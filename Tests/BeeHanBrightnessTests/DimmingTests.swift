@@ -16,10 +16,12 @@ import Testing
 
 @Test func downGoesDeeperUntilTheLastStep() {
     #expect(press(3, dot, up: false) == 4)
-    #expect(press(dims.count, dot, up: false) == dims.count)
+    #expect(press(dims.count, dot, up: false) == off)
+    #expect(press(off, 0, up: false) == off)
 }
 
 @Test func upWalksBackOutThenLeavesItToMacOS() {
+    #expect(press(off, 0, up: true) == dims.count)
     #expect(press(3, dot, up: true) == 2)
     #expect(press(1, dot, up: true) == 0)
     #expect(press(0, dot, up: true) == nil)
