@@ -59,8 +59,13 @@ func setUpMenu() {
         // Registering from anywhere else (a build folder) would point the login item at a bundle that disappears.
         loginItem.isEnabled = Bundle.main.bundlePath.hasPrefix("/Applications/")
         dockItem.state = inDock() ? .on : .off
-        checkItem.isEnabled = !checking
-        if let version = availableUpdate() {
+        checkItem.isEnabled = !checking && UpdateProgress.underway == nil
+        if let step = UpdateProgress.underway {
+            // Plain text, which greys out: the bold "Update available!" still looked clickable.
+            checkItem.attributedTitle = nil
+            checkItem.title = step
+            checkItem.image = NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: nil)
+        } else if let version = availableUpdate() {
             checkItem.attributedTitle = updateAvailableTitle(version)
             checkItem.image = updateAvailableIcon()
         } else {
