@@ -8,10 +8,10 @@ var owned = [Int: Bool]()
 var tap: CFMachPort?
 
 func apply(_ n: Int, _ d: CGDirectDisplayID) {
-    _ = dsSet(d, Float(dot))
-    if n > 0 { gamma(d, dims[n - 1]) } else if depth > 0 { gamma(d, 1) }
+    _ = dsSet(d, n == off ? 0 : Float(dot))
+    if n > 0 { gamma(d, dims[min(n, dims.count) - 1]) } else if depth > 0 { gamma(d, 1) }
     depth = n
-    showHUD(d, filled: dims.count - n) // empties as it gets darker, full at depth 0
+    showHUD(d, filled: max(dims.count - n, 0)) // empties as it gets darker, full at depth 0
 }
 
 // Returns the event to pass on, or nil to swallow it.

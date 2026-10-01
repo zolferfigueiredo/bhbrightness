@@ -24,8 +24,9 @@ Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
     if tap == nil, AXIsProcessTrusted() { startTap() }
     guard depth > 0, let d = builtin() else { return }
     // Raised elsewhere: leave sub-zero. Uses step(): just after a held F1 crosses in, macOS's fade still reads above dot.
+    let f = dims[min(depth, dims.count) - 1] // off keeps the darkest gamma
     if let b = backlight(d), step(b) > dot { depth = 0; gamma(d, 1) }
-    else if abs(gammaTop(d) - dims[depth - 1]) > 0.01 { gamma(d, dims[depth - 1]) } // macOS resets gamma on wake and display changes
+    else if abs(gammaTop(d) - f) > 0.01 { gamma(d, f) } // macOS resets gamma on wake and display changes
 }
 
 _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)

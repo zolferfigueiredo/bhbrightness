@@ -10,7 +10,8 @@ macOS stops at its lowest brightness step, the first segment of its brightness i
 
 - Above the lowest step, F1 and F2 (brightness down and up) work exactly as usual, with macOS's own indicator (the system HUD).
 - At the lowest step, F1 enters sub-zero dimming: 16 extra steps, each darker than the last. They show on the BeeHan HUD, a brightness square with the ninja, whose bar empties as the screen darkens.
-- Holding F1 goes all the way down in one hold: macOS's steps first, then straight on into sub-zero.
+- One more F1 after the darkest sub-zero step turns the screen off, as macOS does at its lowest step. F2 turns it back on at the darkest step.
+- Holding F1 goes all the way down in one hold: macOS's steps first, then straight on into sub-zero and on to off.
 - F2 walks back out one step at a time. Held, it hands over to macOS at the lowest step and keeps climbing under the system HUD.
 - Brightness keys pressed with Shift, Control, Option or Command are left to macOS.
 - Raising the brightness any other way (Control Center, System Settings) leaves sub-zero dimming on its own.
