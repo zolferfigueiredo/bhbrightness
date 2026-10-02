@@ -16,7 +16,7 @@ For anything bigger than a small fix, open an issue first so we can agree on the
 3. If you changed the app (anything in `Sources`, `icon.svg` or `Package.swift`), raise `VERSION` in `build.sh`, for example 1.2.3 to 1.2.4.
 4. Open a pull request against `main`.
 
-CI runs the tests on Linux, counting any compiler warning as an error. It also runs shellcheck on the scripts and checks that the version went up.
+CI builds and tests it on macOS and runs the tests again on Linux, counting any compiler warning as an error. It also runs shellcheck on the scripts and checks that the version went up.
 
 ## Translations
 
