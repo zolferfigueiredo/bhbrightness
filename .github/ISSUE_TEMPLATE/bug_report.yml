@@ -1,0 +1,31 @@
+name: Bug report
+description: Something doesn't work as it should
+labels: [bug]
+body:
+  - type: textarea
+    attributes:
+      label: What happened?
+      description: What you expected, what you got instead, and a screenshot if it helps.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Press F1 at the lowest brightness
+        2. ...
+  - type: input
+    attributes:
+      label: BeeHan Brightness version
+      description: Shown in About BeeHan Brightness.
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: macOS version
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Mac
+      description: The model, for example MacBook Air M2.

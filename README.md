@@ -1,8 +1,65 @@
-<img src="icon.svg" width="128" alt="BeeHanBrightness icon">
+<p align="center">
+  <img src="icon.svg" width="128" height="128" alt="BeeHan Brightness icon">
+</p>
 
-# BeeHanBrightness
+<h1 align="center">BeeHan Brightness</h1>
 
-A tiny macOS menu bar app that takes your MacBook's built-in display below zero, darker than the lowest brightness macOS allows. BeeHan stays out of the way until the screen needs to go cold.
+<h3 align="center">Darker than macOS allows.</h3>
+
+<p align="center">
+  16 brightness steps below the lowest one macOS gives your MacBook display.<br>
+  The same brightness keys, the same kind of indicator, just further down.
+</p>
+
+<p align="center">
+  <a href="https://github.com/zolferfigueiredo/bhbrightness/releases/latest"><img src="https://img.shields.io/github/v/release/zolferfigueiredo/bhbrightness" alt="Latest release"></a>
+  <a href="https://www.swift.org"><img src="https://img.shields.io/badge/Swift-6.0-orange" alt="Swift 6.0"></a>
+  <img src="https://img.shields.io/badge/Platform-macOS%2013%2B-blue" alt="macOS 13 or later">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow" alt="MIT license"></a>
+  <a href="https://github.com/zolferfigueiredo/bhbrightness/actions/workflows/ci.yml"><img src="https://github.com/zolferfigueiredo/bhbrightness/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/zolferfigueiredo/bhbrightness/releases/latest"><b>Download for macOS</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://bhb.zolfer.com">Website</a>
+</p>
+
+## Install
+
+1. [Download the DMG](https://github.com/zolferfigueiredo/bhbrightness/releases/latest), open it and drag BeeHan Brightness to Applications.
+2. Open BeeHan Brightness. It's signed and notarized by Apple, so macOS only asks you to confirm the first time.
+3. Allow it in System Settings > Privacy & Security > Accessibility, so it can see the brightness keys. Until you do, its menu starts with **Allow Accessibility access…**, which opens that page. It starts listening within a second, no relaunch needed.
+
+Or install it with [Homebrew](https://brew.sh/):
+
+```bash
+brew install --cask zolferfigueiredo/app/beehan-brightness
+```
+
+You need:
+
+- A Mac with a built-in display, such as a MacBook
+- macOS 13 or later, on Apple silicon or Intel
+- BeeHan Brightness in Applications, for launch at login and updates
+
+## Features
+
+- **16 steps below zero.** At macOS's lowest brightness, F1 keeps going, each step darker than the last. One more turns the screen off.
+- **Feels like macOS.** Its indicator is drawn to the measurements of macOS's own brightness square, with a ninja for the sun.
+- **Your keys, as they were.** Above the lowest step, F1 and F2 work exactly as usual. With Shift, Control, Option or Command they're left to macOS.
+- **Comes back by itself.** macOS undoes the dimming after sleep and display changes, and BeeHan puts it back within a second. Quitting restores the normal screen.
+- **Speaks 12 languages.** Deutsch, English, Español, Français, Italiano, Polski, Português, Русский, Українська, 中文, 日本語 and 한국어. It starts in your Mac's language, and **Language** in the menu changes it.
+- **Native and tiny.** A small Swift app with no Dock icon. It can launch at login and installs updates in one click.
+
+## How it works
+
+- The backlight is held at the lowest lit step while the display's gamma table dims the picture further.
+- macOS resets gamma after sleep and display changes, so BeeHan checks every second and puts it back.
+- The BeeHan HUD is drawn to the measurements of macOS's classic brightness square, so sub-zero dimming still looks like part of the system.
+- Only the built-in display is touched. External monitors are left alone.
+- The backlight is set through the private DisplayServices framework, so a future macOS update could break it.
+- **Check for updates…** downloads `latest.json` from bhb.zolfer.com and sends nothing about you. An update installs only if it's signed by the same developer, and only into the copy in Applications. While it installs, a window shows each step under a loading bar; **Reopen** then starts the new version. When an automatic check finds a new version, a notification says so once; clicking it offers Update Now.
 
 ## Sub-zero dimming
 
@@ -17,50 +74,36 @@ macOS stops at its lowest brightness step, the first segment of its brightness i
 - Raising the brightness any other way (Control Center, System Settings) leaves sub-zero dimming on its own.
 - Quitting restores the normal screen.
 
-## How it works
+<details>
+<summary><b>Every menu item</b></summary>
 
-- The backlight is held at the lowest lit step while the display's gamma table dims the picture further.
-- macOS resets gamma after sleep and display changes, so BeeHan checks every second and puts it back.
-- The BeeHan HUD is drawn to the measurements of macOS's classic brightness square, so sub-zero dimming still looks like part of the system.
-- Only the built-in display is touched. External monitors are left alone.
-- The backlight is set through the private DisplayServices framework, so a future macOS update could break it.
+- **Allow Accessibility access…**, until it's allowed: opens Privacy & Security > Accessibility.
+- **Language**: the 12 languages, each named in itself.
+- **Launch at login** (from the Applications folder) and **Keep in Dock**.
+- **About BeeHan Brightness**: the version and the website.
+- **Check for updates…**, and **Check automatically** daily, weekly (default) or never.
+- **Quit BeeHan Brightness**, which puts the normal screen back.
 
-## Requirements
+</details>
 
-- A MacBook with a built-in display
-- Xcode 16 or later (Swift 6)
-- An "Apple Development" signing certificate
-- Accessibility permission, needed to catch the brightness keys
+## Build from source
 
-## Install
-
-Download the DMG from [bhb.zolfer.com](https://bhb.zolfer.com/), open it and drag BeeHan Brightness to Applications. Or install it with [Homebrew](https://brew.sh/):
-
-```bash
-brew install --cask zolferfigueiredo/app/beehan-brightness
-```
-
-## Build and install
-
-```bash
+```sh
 ./build.sh
 ```
 
-The script runs the tests (`swift test`), builds the app, signs it, installs it to `/Applications/BeeHan Brightness.app` and launches it. It also packs the app into `dist/BeeHanBrightness-<version>-dev.dmg`, which is developer-signed and not notarized, so it is for this Mac only. `release.sh` makes the notarized DMG for sharing, using the version set in `build.sh`. `release.sh --url` also makes the permanent url.zolfer.com download link.
+It runs the tests, builds the app, signs it, installs it to `/Applications/BeeHan Brightness.app` and launches it. It also packs the app into `dist/BeeHanBrightness-<version>-dev.dmg`, which is developer-signed and not notarized, so it's for this Mac only. It needs Xcode 16 or later (Swift 6) and an Apple Development certificate, which also keeps the Accessibility permission across rebuilds.
 
-For quick testing, `./run.sh` quits any running BeeHan, builds the app into `.build/` without installing or signing it, and runs it in the foreground. It starts the program inside the app directly rather than through `open`, so the Accessibility permission belongs to your terminal app; grant it there. `./run.sh -testNotifications YES` also shows the update notification, offering the next version, to check how it reads; the installed app does the same with `open -a "BeeHan Brightness" --args -testNotifications YES` once quit.
+To try a change, run `./run.sh`. It quits any running BeeHan, builds the app into `.build/` without installing or signing it, and runs it in the foreground. It starts the program inside the app directly rather than through `open`, so the Accessibility permission belongs to your terminal app; grant it there.
 
-On first launch macOS asks for Accessibility access. Allow it in System Settings > Privacy & Security > Accessibility. BeeHan starts listening within a second, no relaunch needed. Until access is allowed, the menu starts with **Allow Accessibility access…**, which opens that page. Signing with a certificate (not ad-hoc) keeps the permission across rebuilds.
+`./run.sh -testNotifications YES` also shows the update notification, offering the next version, to check how it reads. The installed app does the same with `open -a "BeeHan Brightness" --args -testNotifications YES` once quit.
 
-To start it at login, turn on **Launch at login** in the menu.
+`./release.sh` makes the notarized DMG for sharing, using the version set in `build.sh`, and publishes it as a GitHub release of the current commit, which must be pushed. `./release.sh --url` also makes the permanent url.zolfer.com download link.
 
-Click the menu bar icon for Language, Launch at login, Keep in Dock, About (version and website), Check for updates…, Check automatically (daily, weekly by default, or never) and Quit.
+A Swift package: the app is in `Sources/BeeHanBrightness`, one file per part (`Dimming`, `Display`, `KeyTap`, `HUD`, `Menu`, `Language`, `Updates`, `Dock`, `About`), the text of each language is in `Strings`, and the tests are in `Tests`. CI runs the tests on Linux for every pull request, since everything that needs AppKit is behind `#if canImport(AppKit)`, counting any compiler warning as an error. It also runs shellcheck on the scripts, and fails a pull request that changes the app without raising `VERSION` in `build.sh`.
 
-BeeHan speaks 12 languages: Deutsch, English, Español, Français, Italiano, Polski, Português, Русский, Українська, 中文, 日本語 and 한국어. It starts in your Mac's language (English when it speaks none of those), and **Language** in the menu changes it.
-
-**Check for updates…** asks bhb.zolfer.com for `latest.json`, a plain download that sends nothing about you. When there is a newer version, **Update Now** downloads it, checks it is signed by you and replaces the copy in Applications, showing each step and a loading bar; **Reopen** then starts the new version. When an automatic check finds a new version, a notification says so once; clicking it offers Update Now. BeeHan needs macOS 13 or later.
-
-## Tuning
+<details>
+<summary><b>Tuning</b></summary>
 
 Two values in [Dimming.swift](Sources/BeeHanBrightness/Dimming.swift) control the feel:
 
@@ -69,10 +112,31 @@ Two values in [Dimming.swift](Sources/BeeHanBrightness/Dimming.swift) control th
 
 Run `./build.sh` again after editing.
 
-## Code
-
-A Swift package: the app is in `Sources/BeeHanBrightness`, one file per part (`Dimming`, `Display`, `KeyTap`, `HUD`, `Menu`, `Language`, `Updates`, `Dock`, `About`), the text of each language is in `Strings`, and the tests are in `Tests`. `swift test` runs them; they also run on Linux in CI, since everything that needs AppKit is behind `#if canImport(AppKit)`. CI also runs shellcheck on the scripts, counts any compiler warning as an error, and fails a pull request that changes the app without raising `VERSION` in `build.sh`.
+</details>
 
 ## Uninstall
 
-Quit from the pixel-art icon in the menu bar, delete `/Applications/BeeHan Brightness.app` and remove it from the Accessibility list.
+```bash
+brew uninstall --cask beehan-brightness
+```
+
+Or quit from the menu bar icon and delete `/Applications/BeeHan Brightness.app`. Either way, remove it from the Accessibility list in Privacy & Security too.
+
+## Disclaimer
+
+Unofficial. Not affiliated with or endorsed by Apple. It relies on a private macOS framework that a future macOS update may change or remove.
+
+## License
+
+[MIT](LICENSE)
+
+---
+
+<p align="center">
+  If BeeHan Brightness is useful to you, please consider giving it a ⭐<br>
+  It helps other night owls find it. Thank you!
+</p>
+
+<p align="center">
+  Made with ❤️ for late nights by <a href="https://zolfer.com">zolfer.com</a>
+</p>

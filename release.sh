@@ -1,4 +1,6 @@
 #!/bin/sh
+# Set VERSION in build.sh first. Builds dist/BeeHanBrightness-<version>.dmg, signs and notarizes it with Developer ID,
+# then publishes it as a GitHub release of the current commit, which must be pushed. The website repo's release script puts it on the site.
 # One-time setup: xcrun notarytool store-credentials beehan --key <AuthKey.p8> --key-id <id> --issuer <issuer-id>
 set -eu
 cd "$(dirname "$0")"
@@ -105,3 +107,5 @@ echo "Release ready: $DMG"
   loc=$(curl -fsS -o /dev/null -w '%{redirect_url}' --data-urlencode "url=https://bhb.zolfer.com/$NAME-$VERSION.dmg" https://url.zolfer.com/dmg)
   echo "Download link: https://url.zolfer.com/${loc##*c=}"
 }
+gh release view "v$VERSION" -R zolferfigueiredo/bhbrightness >/dev/null 2>&1 ||
+  gh release create "v$VERSION" "$DMG" -R zolferfigueiredo/bhbrightness --target "$(git rev-parse HEAD)" --title "$APPNAME $VERSION" --generate-notes
