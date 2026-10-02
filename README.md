@@ -37,7 +37,7 @@ macOS stops at its lowest brightness step, the first segment of its brightness i
 Download the DMG from [bhb.zolfer.com](https://bhb.zolfer.com/), open it and drag BeeHan Brightness to Applications. Or install it with [Homebrew](https://brew.sh/):
 
 ```bash
-brew install --cask zolferfigueiredo/tap/beehan-brightness
+brew install --cask zolferfigueiredo/app/beehan-brightness
 ```
 
 ## Build and install
