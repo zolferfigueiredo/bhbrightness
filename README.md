@@ -101,7 +101,7 @@ To try a change, run `./run.sh`. It quits any running BeeHan, builds the app int
 
 `./release.sh` makes the notarized DMG for sharing, using the version set in `build.sh`, and publishes it as a GitHub release of the current commit, which must be pushed. `./release.sh --url` also makes the permanent url.zolfer.com download link.
 
-A Swift package: the app is in `Sources/BeeHanBrightness`, one file per part (`Dimming`, `Display`, `KeyTap`, `HUD`, `Menu`, `Language`, `Updates`, `Dock`, `About`), the text of each language is in `Strings`, and the tests are in `Tests`. CI runs the tests on Linux for every pull request, since everything that needs AppKit is behind `#if canImport(AppKit)`, counting any compiler warning as an error. It also runs shellcheck on the scripts, and fails a pull request that changes the app without raising `VERSION` in `build.sh`.
+A Swift package: the app is in `Sources/BeeHanBrightness`, one file per part (`Dimming`, `Display`, `KeyTap`, `HUD`, `Menu`, `Language`, `Updates`, `Dock`, `About`), the text of each language is in `Strings`, and the tests are in `Tests`. CI builds and tests every pull request on macOS, counting any compiler warning as an error. It also runs shellcheck on the scripts, and fails a pull request that changes the app without raising `VERSION` in `build.sh`.
 
 <details>
 <summary><b>Tuning</b></summary>
