@@ -32,6 +32,14 @@ macOS stops at its lowest brightness step, the first segment of its brightness i
 - An "Apple Development" signing certificate
 - Accessibility permission, needed to catch the brightness keys
 
+## Install
+
+Download the DMG from [bhb.zolfer.com](https://bhb.zolfer.com/), open it and drag BeeHan Brightness to Applications. Or install it with [Homebrew](https://brew.sh/):
+
+```bash
+brew install --cask zolferfigueiredo/tap/beehan-brightness
+```
+
 ## Build and install
 
 ```bash
