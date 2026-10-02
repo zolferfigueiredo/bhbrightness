@@ -107,5 +107,7 @@ echo "Release ready: $DMG"
   loc=$(curl -fsS -o /dev/null -w '%{redirect_url}' --data-urlencode "url=https://bhb.zolfer.com/$NAME-$VERSION.dmg" https://url.zolfer.com/dmg)
   echo "Download link: https://url.zolfer.com/${loc##*c=}"
 }
+# Casks/beehan-brightness.rb always installs releases/latest/download/BeeHanBrightness.dmg, so every release carries a copy under that name.
+cp "$DMG" "dist/$NAME.dmg"
 gh release view "v$VERSION" -R zolferfigueiredo/bhbrightness >/dev/null 2>&1 ||
-  gh release create "v$VERSION" "$DMG" -R zolferfigueiredo/bhbrightness --target "$(git rev-parse HEAD)" --title "$APPNAME $VERSION" --generate-notes
+  gh release create "v$VERSION" "$DMG" "dist/$NAME.dmg" -R zolferfigueiredo/bhbrightness --target "$(git rev-parse HEAD)" --title "$APPNAME $VERSION" --generate-notes

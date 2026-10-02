@@ -34,7 +34,8 @@
 Or install it with [Homebrew](https://brew.sh/):
 
 ```bash
-brew install --cask zolferfigueiredo/app/beehan-brightness
+brew tap zolferfigueiredo/bhbrightness https://github.com/zolferfigueiredo/bhbrightness
+brew install --cask beehan-brightness
 ```
 
 You need:
