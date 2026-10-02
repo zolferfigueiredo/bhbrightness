@@ -4,8 +4,7 @@ cask "beehan-brightness" do
   version :latest
   sha256 :no_check
 
-  url "https://github.com/zolferfigueiredo/bhbrightness/releases/latest/download/BeeHanBrightness.dmg",
-      verified: "github.com/zolferfigueiredo/bhbrightness/"
+  url "https://github.com/zolferfigueiredo/bhbrightness/releases/latest/download/BeeHanBrightness.dmg"
   name "BeeHan Brightness"
   desc "Dims the built-in display below its lowest brightness"
   homepage "https://bhb.zolfer.com/"
