@@ -28,6 +28,7 @@
 <p align="center">
   <img src="docs/screenshots/beehan-hud.png" width="200" alt="The BeeHan indicator: the ninja in a brightness square, its bar half empty below zero">
 </p>
+<p align="center"><a href="docs/screenshots"><b>More screenshots</b></a></p>
 
 ## Install
 
