@@ -25,6 +25,10 @@
   <a href="https://bhb.zolfer.com">Website</a>
 </p>
 
+<p align="center">
+  <img src="docs/screenshots/beehan-hud.png" width="200" alt="The BeeHan indicator: the ninja in a brightness square, its bar half empty below zero">
+</p>
+
 ## Install
 
 1. [Download the DMG](https://github.com/zolferfigueiredo/bhbrightness/releases/latest), open it and drag BeeHan Brightness to Applications.
@@ -77,6 +81,10 @@ macOS stops at its lowest brightness step, the first segment of its brightness i
 
 <details>
 <summary><b>Every menu item</b></summary>
+
+<p align="center">
+  <img src="docs/screenshots/beehan-menu.png" width="392" alt="The BeeHan Brightness menu, with the Language list open">
+</p>
 
 - **Allow Accessibility access…**, until it's allowed: opens Privacy & Security > Accessibility.
 - **Language**: the 12 languages, each named in itself.
