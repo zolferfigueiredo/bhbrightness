@@ -26,7 +26,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/beehan-hud.png" width="200" alt="The BeeHan indicator: the ninja in a brightness square, its bar half empty below zero">
+  <img src="docs/screenshots/beehan-menu.png" width="392" alt="The BeeHan Brightness menu, with the Language list open">
 </p>
 <p align="center"><a href="docs/screenshots"><b>More screenshots</b></a></p>
 
@@ -71,6 +71,10 @@ You need:
 
 macOS stops at its lowest brightness step, the first segment of its brightness indicator. Sub-zero dimming picks up from there.
 
+<p align="center">
+  <img src="docs/screenshots/beehan-hud.png" width="200" alt="The BeeHan indicator: the ninja in a brightness square, its bar half empty below zero">
+</p>
+
 - Above the lowest step, F1 and F2 (brightness down and up) work exactly as usual, with macOS's own indicator (the system HUD).
 - At the lowest step, F1 enters sub-zero dimming: 16 extra steps, each darker than the last. They show on the BeeHan HUD, a brightness square with the ninja, whose bar empties as the screen darkens.
 - One more F1 after the darkest sub-zero step turns the screen off, as macOS does at its lowest step. F2 turns it back on at the darkest step.
@@ -82,10 +86,6 @@ macOS stops at its lowest brightness step, the first segment of its brightness i
 
 <details>
 <summary><b>Every menu item</b></summary>
-
-<p align="center">
-  <img src="docs/screenshots/beehan-menu.png" width="392" alt="The BeeHan Brightness menu, with the Language list open">
-</p>
 
 - **Allow Accessibility access…**, until it's allowed: opens Privacy & Security > Accessibility.
 - **Language**: the 12 languages, each named in itself.
