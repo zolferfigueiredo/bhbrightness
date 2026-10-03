@@ -26,8 +26,9 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/beehan-hud.png" width="200" alt="The BeeHan indicator: the ninja in a brightness square, its bar half empty below zero">
+  <img src="docs/screenshots/beehan-menu.png" width="392" alt="The BeeHan Brightness menu, with the Language list open">
 </p>
+<p align="center"><a href="#screenshots"><b>More screenshots</b></a></p>
 
 ## Install
 
@@ -57,6 +58,13 @@ You need:
 - **Speaks 12 languages.** Deutsch, English, Español, Français, Italiano, Polski, Português, Русский, Українська, 中文, 日本語 and 한국어. It starts in your Mac's language, and **Language** in the menu changes it.
 - **Native and tiny.** A small Swift app with no Dock icon. It can launch at login and installs updates in one click.
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/beehan-hud.png" width="200" alt="The BeeHan indicator: the ninja in a brightness square, its bar half empty below zero">
+</p>
+<p align="center"><sub>Below zero, the BeeHan indicator: the ninja in macOS's brightness square, its bar emptying as the screen darkens</sub></p>
+
 ## How it works
 
 - The backlight is held at the lowest lit step while the display's gamma table dims the picture further.
@@ -81,10 +89,6 @@ macOS stops at its lowest brightness step, the first segment of its brightness i
 
 <details>
 <summary><b>Every menu item</b></summary>
-
-<p align="center">
-  <img src="docs/screenshots/beehan-menu.png" width="392" alt="The BeeHan Brightness menu, with the Language list open">
-</p>
 
 - **Allow Accessibility access…**, until it's allowed: opens Privacy & Security > Accessibility.
 - **Language**: the 12 languages, each named in itself.
