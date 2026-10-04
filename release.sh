@@ -109,5 +109,7 @@ echo "Release ready: $DMG"
 }
 # Casks/beehan-brightness.rb always installs releases/latest/download/BeeHanBrightness.dmg, so every release carries a copy under that name.
 cp "$DMG" "dist/$NAME.dmg"
+# The apps learn the newest version from releases/latest/download/latest.json, the same file the website serves.
+printf '{"version": "%s"}\n' "$VERSION" > dist/latest.json
 gh release view "v$VERSION" -R zolferfigueiredo/bhbrightness >/dev/null 2>&1 ||
-  gh release create "v$VERSION" "$DMG" "dist/$NAME.dmg" -R zolferfigueiredo/bhbrightness --target "$(git rev-parse HEAD)" --title "$APPNAME $VERSION" --generate-notes
+  gh release create "v$VERSION" "$DMG" "dist/$NAME.dmg" dist/latest.json -R zolferfigueiredo/bhbrightness --target "$(git rev-parse HEAD)" --title "$APPNAME $VERSION" --generate-notes
