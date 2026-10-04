@@ -72,7 +72,7 @@ You need:
 - The BeeHan HUD is drawn to the measurements of macOS's classic brightness square, so sub-zero dimming still looks like part of the system.
 - Only the built-in display is touched. External monitors are left alone.
 - The backlight is set through the private DisplayServices framework, so a future macOS update could break it.
-- **Check for updates…** downloads `latest.json` from bhb.zolfer.com and sends nothing about you. An update installs only if it's signed by the same developer, and only into the copy in Applications. While it installs, a window shows each step under a loading bar; **Reopen** then starts the new version. When an automatic check finds a new version, a notification says so once; clicking it offers Update Now.
+- **Check for updates…** asks GitHub for the newest release and sends nothing about you, and an update downloads from that release. An update installs only if it's signed by the same developer, and only into the copy in Applications. While it installs, a window shows each step under a loading bar; **Reopen** then starts the new version. When an automatic check finds a new version, a notification says so once; clicking it offers Update Now.
 
 ## Sub-zero dimming
 
