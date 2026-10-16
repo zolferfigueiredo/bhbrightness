@@ -1,16 +1,28 @@
 #!/bin/sh
 # Set VERSION in build.sh first. Builds dist/BeeHanBrightness-<version>.dmg, signs and notarizes it with Developer ID,
-# then publishes it as a GitHub release of the current commit, which must be pushed. The website repo's release script puts it on the site.
+# then publishes it as a GitHub release of the current commit, which must be pushed.
+# .github/workflows/release.yml runs it in two halves on every push to main:
+#   ./release.sh build  the tests and the unsigned dist/dmg/BeeHan Brightness.app, on GitHub's Mac
+#   ./release.sh sign   Developer ID, the DMG, notarization and the release, on the self-hosted runner on z's Mac
+# With neither it does both, by hand. Both stop early when this version is already released.
 # One-time setup: xcrun notarytool store-credentials beehan --key <AuthKey.p8> --key-id <id> --issuer <issuer-id>
 set -eu
 cd "$(dirname "$0")"
+MODE=all
+case "${1:-}" in build | sign) MODE=$1; shift ;; esac
 NAME=BeeHanBrightness
 APPNAME="BeeHan Brightness"  # the app as you see it; NAME stays the program inside it and the DMG file
 VERSION=$(sed -n 's/^VERSION=//p' build.sh)
 ID="Developer ID Application: Zolfer Figueiredo (497V6MCDS8)"
 APP="dist/dmg/$APPNAME.app"
 DMG="dist/$NAME-$VERSION.dmg"
+if gh release view "v$VERSION" -R zolferfigueiredo/bhbrightness >/dev/null 2>&1; then
+  echo "v$VERSION is already released."
+  exit 0
+fi
 
+# The build half.
+if [ "$MODE" != sign ]; then
 rm -rf dist
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" dist/AppIcon.iconset
 # A clean build in /tmp, gone when this script ends.
@@ -62,7 +74,11 @@ EOF
 for s in 1 2; do sips -s format png -z $((440 * s)) $((600 * s)) dist/background.svg --out "dist/bg$s.png" >/dev/null; done
 tiffutil -cathidpicheck dist/bg1.png dist/bg2.png -out "$APP/Contents/Resources/dmg-background.tiff"
 rm dist/background.svg dist/bg1.png dist/bg2.png
+fi
 
+# The sign half.
+[ "$MODE" != build ] || exit 0
+[ -d "$APP" ] || { echo "$APP is missing: run ./release.sh build first." >&2; exit 1; }
 # Notarization requires the hardened runtime and a secure timestamp.
 codesign --force --options runtime --timestamp --sign "$ID" "$APP"
 ln -s /Applications dist/dmg/Applications
@@ -92,7 +108,13 @@ tell application "Finder"
   end tell
 end tell
 EOF
-until [ -f "/Volumes/$APPNAME/.DS_Store" ]; do sleep 1; done
+# A Finder that can't be scripted would leave this waiting for ever.
+i=0
+until [ -f "/Volumes/$APPNAME/.DS_Store" ]; do
+  i=$((i + 1))
+  [ "$i" -le 60 ] || { echo "Finder didn't lay out the DMG within a minute." >&2; exit 1; }
+  sleep 1
+done
 rm -rf "/Volumes/$APPNAME/.fseventsd" "/Volumes/$APPNAME/.Trashes"
 sync
 hdiutil detach "/Volumes/$APPNAME" >/dev/null
@@ -111,5 +133,4 @@ echo "Release ready: $DMG"
 cp "$DMG" "dist/$NAME.dmg"
 # The apps learn the newest version from releases/latest/download/latest.json, the same file the website serves.
 printf '{"version": "%s"}\n' "$VERSION" > dist/latest.json
-gh release view "v$VERSION" -R zolferfigueiredo/bhbrightness >/dev/null 2>&1 ||
-  gh release create "v$VERSION" "$DMG" "dist/$NAME.dmg" dist/latest.json -R zolferfigueiredo/bhbrightness --target "$(git rev-parse HEAD)" --title "$APPNAME $VERSION" --generate-notes
+gh release create "v$VERSION" "$DMG" "dist/$NAME.dmg" dist/latest.json -R zolferfigueiredo/bhbrightness --target "$(git rev-parse HEAD)" --title "$APPNAME $VERSION" --generate-notes
