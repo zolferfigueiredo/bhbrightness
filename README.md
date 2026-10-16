@@ -113,6 +113,15 @@ To try a change, run `./run.sh`. It quits any running BeeHan, builds the app int
 
 `./release.sh` makes the notarized DMG for sharing, using the version set in `build.sh`, and publishes it as a GitHub release of the current commit, which must be pushed. `./release.sh --url` also makes the permanent url.zolfer.com download link.
 
+Every push to `main` whose version isn't released yet is released by `.github/workflows/release.yml`. GitHub's Mac runs `./release.sh build`, then a self-hosted runner on the Mac that holds the Developer ID key runs `./release.sh sign`, so the key never leaves its keychain. A pull request that changes the release files runs only the build half. The runner, set up once on that Mac:
+
+1. On GitHub, open Settings > Actions > Runners > New self-hosted runner (macOS, ARM64), and download it into `~/www/actions-runner/bhbrightness` as that page shows.
+2. From a terminal where `gh` and Homebrew are on the PATH (the runner keeps that PATH), run `./config.sh --url https://github.com/zolferfigueiredo/bhbrightness --token <the token on that page> --labels release --name bhbrightness-mac --unattended`, then `./svc.sh install`. The runner then starts at login, and `~/www/actions-runner/run.sh` starts every runner in that folder.
+3. Under Settings > Actions > General > Fork pull request workflows, choose "Require approval for all external contributors", so a fork's pull request can't reach the runner.
+4. On the first release, let the runner control Finder, and let `codesign` and `notarytool` use the keychain.
+
+While that Mac is off or logged out, the sign job waits; Re-run failed jobs retries it with the same build.
+
 A Swift package: the app is in `Sources/BeeHanBrightness`, one file per part (`Dimming`, `Display`, `KeyTap`, `HUD`, `Menu`, `Language`, `Updates`, `Dock`, `About`), the text of each language is in `Strings`, and the tests are in `Tests`. CI builds and tests every pull request on macOS, counting any compiler warning as an error. It also runs shellcheck on the scripts, and fails a pull request that changes the app without raising `VERSION` in `build.sh`.
 
 <details>

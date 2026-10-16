@@ -8,6 +8,8 @@ VERSION=$(sed -n 's/^VERSION=//p' build.sh)
 APP=".build/$APPNAME.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 swift build
+# A new file rather than cp over the old one: macOS remembers the old binary's signature and kills the new one (Killed: 9).
+rm -f "$APP/Contents/MacOS/$NAME"
 cp "$(swift build --show-bin-path)/$NAME" "$APP/Contents/MacOS/"
 # Same icon as build.sh.
 T=$(mktemp -d)
