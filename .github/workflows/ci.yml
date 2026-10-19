@@ -34,3 +34,11 @@ jobs:
             exit 1
           fi
           echo "$old -> $new"
+      - name: The cask installs this version
+        run: |
+          app=$(sed -n 's/^VERSION=//p' build.sh)
+          cask=$(sed -n 's/^  version "\(.*\)"$/\1/p' Casks/beehan-brightness.rb)
+          if [ "$cask" != "$app" ]; then
+            echo "::error file=Casks/beehan-brightness.rb::version has to be the app's, $app (it is $cask)."
+            exit 1
+          fi
