@@ -1,14 +1,15 @@
-# Always the latest GitHub release: release.sh uploads a copy of each DMG as BeeHanBrightness.dmg, so this
-# file never changes with a version. The app updates itself, and Gatekeeper checks its notarization.
+# Installs the DMG of release v<version>. CI keeps version equal to the app's, so a version bump bumps it too.
+# The app updates itself, so brew upgrade leaves it alone, and Gatekeeper checks its notarization.
 cask "beehan-brightness" do
-  version :latest
+  version "1.2.0"
   sha256 :no_check
 
-  url "https://github.com/zolferfigueiredo/bhbrightness/releases/latest/download/BeeHanBrightness.dmg"
+  url "https://github.com/zolferfigueiredo/bhbrightness/releases/download/v#{version}/BeeHanBrightness-#{version}.dmg"
   name "BeeHan Brightness"
   desc "Dims the built-in display below its lowest brightness"
   homepage "https://bhb.zolfer.com/"
 
+  auto_updates true
   depends_on macos: :ventura
 
   app "BeeHan Brightness.app"
