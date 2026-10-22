@@ -25,9 +25,9 @@ fi
 if [ "$MODE" != sign ]; then
 rm -rf dist
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" dist/AppIcon.iconset
-# A clean build in /tmp, gone when this script ends.
+# A clean build in /tmp, gone when this script ends, and the DMG being laid out ejected if it stops halfway.
 WORK=$(mktemp -d /tmp/beehan.XXXXXX)
-trap 'rm -rf "$WORK"' EXIT
+trap 'if [ -n "${MNT:-}" ]; then hdiutil detach -quiet -force "$MNT"; fi; rm -rf "$WORK"' EXIT
 swift test --scratch-path "$WORK"
 # One universal binary for Apple silicon and Intel.
 universal() { swift build -c release --arch arm64 --arch x86_64 --scratch-path "$WORK" "$@"; }
@@ -89,6 +89,7 @@ mount | { grep -i " on /Volumes/$APPNAME" || true; } | sed 's|^.* on \(/Volumes/
     while IFS= read -r volume; do hdiutil detach -quiet -force "$volume"; done
 hdiutil create -volname "$APPNAME" -srcfolder dist/dmg -format UDRW dist/rw.dmg
 hdiutil attach -noverify -noautoopen dist/rw.dmg >/dev/null
+MNT="/Volumes/$APPNAME"
 osascript <<EOF
 tell application "Finder"
   tell disk "$APPNAME"
@@ -110,14 +111,15 @@ end tell
 EOF
 # A Finder that can't be scripted would leave this waiting for ever.
 i=0
-until [ -f "/Volumes/$APPNAME/.DS_Store" ]; do
+until [ -f "$MNT/.DS_Store" ]; do
   i=$((i + 1))
   [ "$i" -le 60 ] || { echo "Finder didn't lay out the DMG within a minute." >&2; exit 1; }
   sleep 1
 done
-rm -rf "/Volumes/$APPNAME/.fseventsd" "/Volumes/$APPNAME/.Trashes"
+rm -rf "$MNT/.fseventsd" "$MNT/.Trashes"
 sync
-hdiutil detach "/Volumes/$APPNAME" >/dev/null
+hdiutil detach "$MNT" >/dev/null
+MNT=
 hdiutil convert dist/rw.dmg -format UDZO -o "$DMG"
 rm dist/rw.dmg
 codesign --timestamp --sign "$ID" "$DMG"
