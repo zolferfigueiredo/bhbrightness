@@ -11,6 +11,17 @@ func menuItem(_ title: String, _ action: Selector?, key: String = "", symbol: St
     mi.image = symbol.flatMap { NSImage(systemSymbolName: $0, accessibilityDescription: nil) }
     return mi
 }
+
+// macOS 27 hides menu item images unless an item asks to show its own (preferredImageVisibility = .visible, 1).
+// Set by key, as the macOS 26 SDK has no such property.
+func showImages(_ menu: NSMenu) {
+    guard #available(macOS 27, *) else { return }
+    for item in menu.items {
+        if item.image != nil { item.setValue(1, forKey: "preferredImageVisibility") }
+        if let submenu = item.submenu { showImages(submenu) }
+    }
+}
+
 let menu = NSMenu()
 // Without Accessibility access BeeHan never sees the brightness keys, so the menu leads with a way to allow it.
 let accessItem = menuItem("access", #selector(NSApplication.openAccessibilitySettings),
@@ -48,6 +59,7 @@ func setUpMenu() {
         menu.addItem(mi)
     }
     menu.autoenablesItems = false
+    showImages(menu)
     item.menu = menu
     // The menu is built once, so its titles (the language may have changed) and checkmarks are refreshed as it opens.
     NotificationCenter.default.addObserver(forName: NSMenu.didBeginTrackingNotification, object: menu, queue: .main) { _ in

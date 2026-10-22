@@ -1,7 +1,7 @@
 # Installs the DMG of release v<version>. CI keeps version equal to the app's, so a version bump bumps it too.
 # The app updates itself, so brew upgrade leaves it alone, and Gatekeeper checks its notarization.
 cask "beehan-brightness" do
-  version "1.2.1"
+  version "1.2.2"
   sha256 :no_check
 
   url "https://github.com/zolferfigueiredo/bhbrightness/releases/download/v#{version}/BeeHanBrightness-#{version}.dmg"
