@@ -30,14 +30,23 @@ func handle(_ cg: CGEvent) -> CGEvent? {
     if !isRepeat { owned[key] = n != nil }
     if let n {
         DispatchQueue.main.async { apply(n, d) }
-        return nil
+        guard owned[key] != true else { return nil }
+        // Held on into sub-zero: macOS gets a key-up in this repeat's place. macOS 27 repeats a held key
+        // on its own until its key-up, and would turn the backlight off under each sub-zero step.
+        owned[key] = true
+        return aux(key, 0xB00, e)
     }
     DispatchQueue.main.async { hud.orderOut(nil) } // macOS takes this step under its own system HUD
     guard owned[key] == true else { return cg }
     // Held on past sub-zero: macOS gets a key-down in this repeat's place, then the rest of the press.
     owned[key] = false
-    return NSEvent.otherEvent(with: .systemDefined, location: .zero, modifierFlags: [], timestamp: e.timestamp, windowNumber: 0,
-                              context: nil, subtype: 8, data1: key << 16 | 0xA00, data2: -1)?.cgEvent
+    return aux(key, 0xA00, e)
+}
+
+// A brightness key event for macOS to see in place of e.
+func aux(_ key: Int, _ state: Int, _ e: NSEvent) -> CGEvent? {
+    NSEvent.otherEvent(with: .systemDefined, location: .zero, modifierFlags: [], timestamp: e.timestamp, windowNumber: 0,
+                       context: nil, subtype: 8, data1: key << 16 | state, data2: -1)?.cgEvent
 }
 
 func startTap() {
