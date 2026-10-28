@@ -25,9 +25,9 @@ fi
 if [ "$MODE" != sign ]; then
 rm -rf dist
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" dist/AppIcon.iconset
-# A clean build in /tmp, gone when this script ends, and the DMG being laid out ejected if it stops halfway.
+# A clean build in /tmp, gone when this script ends.
 WORK=$(mktemp -d /tmp/beehan.XXXXXX)
-trap 'if [ -n "${MNT:-}" ]; then hdiutil detach -quiet -force "$MNT"; fi; rm -rf "$WORK"' EXIT
+trap 'rm -rf "$WORK"' EXIT
 swift test --scratch-path "$WORK"
 # One universal binary for Apple silicon and Intel.
 universal() { swift build -c release --arch arm64 --arch x86_64 --scratch-path "$WORK" "$@"; }
@@ -81,47 +81,12 @@ fi
 [ -d "$APP" ] || { echo "$APP is missing: run ./release.sh build first." >&2; exit 1; }
 # Notarization requires the hardened runtime and a secure timestamp.
 codesign --force --options runtime --timestamp --sign "$ID" "$APP"
-ln -s /Applications dist/dmg/Applications
+ln -sfn /Applications dist/dmg/Applications
 
-# Finder addresses the volume by name, so a mounted older copy would get the layout instead: eject
-# every one first ("BeeHan Brightness", "BeeHan Brightness 1"...).
-mount | { grep -i " on /Volumes/$APPNAME" || true; } | sed 's|^.* on \(/Volumes/[^(]*\) (.*|\1|' |
-    while IFS= read -r volume; do hdiutil detach -quiet -force "$volume"; done
-hdiutil create -volname "$APPNAME" -srcfolder dist/dmg -format UDRW dist/rw.dmg
-hdiutil attach -noverify -noautoopen dist/rw.dmg >/dev/null
-MNT="/Volumes/$APPNAME"
-osascript <<EOF
-tell application "Finder"
-  tell disk "$APPNAME"
-    open
-    set current view of container window to icon view
-    set toolbar visible of container window to false
-    set statusbar visible of container window to false
-    set bounds of container window to {200, 120, 800, 552}
-    set opts to icon view options of container window
-    set arrangement of opts to not arranged
-    set icon size of opts to 100
-    set text size of opts to 10
-    set background picture of opts to file "$APPNAME.app:Contents:Resources:dmg-background.tiff"
-    set position of item "$APPNAME.app" to {170, 160}
-    set position of item "Applications" to {430, 160}
-    close
-  end tell
-end tell
-EOF
-# A Finder that can't be scripted would leave this waiting for ever.
-i=0
-until [ -f "$MNT/.DS_Store" ]; do
-  i=$((i + 1))
-  [ "$i" -le 60 ] || { echo "Finder didn't lay out the DMG within a minute." >&2; exit 1; }
-  sleep 1
-done
-rm -rf "$MNT/.fseventsd" "$MNT/.Trashes"
-sync
-hdiutil detach "$MNT" >/dev/null
-MNT=
-hdiutil convert dist/rw.dmg -format UDZO -o "$DMG"
-rm dist/rw.dmg
+# The window's layout (background, icon spots) as Finder saved it, so no Finder window opens while a release builds.
+# dmg/layout.sh makes it again when the background or the icon spots change.
+cp dmg/layout.DS_Store dist/dmg/.DS_Store
+hdiutil create -quiet -volname "$APPNAME" -srcfolder dist/dmg -format UDZO "$DMG"
 codesign --timestamp --sign "$ID" "$DMG"
 xcrun notarytool submit "$DMG" --keychain-profile beehan --wait
 xcrun stapler staple "$DMG"
