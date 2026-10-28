@@ -32,5 +32,11 @@ Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
 _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
 DispatchQueue.main.async { app.showUpdateComplete() }  // once the app is running
 if defaults.bool(forKey: "testNotifications") { Task { _ = await showUpdateNotification(nextPatch(appVersion)) } }
+// No menu bar of its own shows, but its keys still work: Cmd-W and Cmd-Q close the window in front. Quitting would
+// take the brightness keys and sub-zero away.
+let keys = NSMenu()
+for key in ["w", "q"] { keys.addItem(withTitle: "", action: #selector(NSWindow.performClose(_:)), keyEquivalent: key) }
+app.mainMenu = NSMenu()
+app.mainMenu?.addItem(withTitle: "", action: nil, keyEquivalent: "").submenu = keys
 app.run()
 #endif
