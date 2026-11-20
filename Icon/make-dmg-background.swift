@@ -27,10 +27,10 @@ func draw(scale: CGFloat) -> CGImage {
 
     ctx.setFillColor(rgb(0, 0, 0))
     ctx.fill(CGRect(x: 0, y: 0, width: width, height: height))
-    // The figure at 6%, running off the right and bottom edges.
+    // The figure at 14%, running off the right and bottom edges.
     NSGraphicsContext.saveGraphicsState()
     NSGraphicsContext.current = NSGraphicsContext(cgContext: ctx, flipped: true)
-    figure.draw(in: NSRect(x: 250, y: 20, width: 486, height: 486), from: .zero, operation: .sourceOver, fraction: 0.06,
+    figure.draw(in: NSRect(x: 250, y: 20, width: 486, height: 486), from: .zero, operation: .sourceOver, fraction: 0.14,
                 respectFlipped: true, hints: nil)
     NSGraphicsContext.restoreGraphicsState()
 
