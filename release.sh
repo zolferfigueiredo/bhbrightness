@@ -1,7 +1,7 @@
 #!/bin/sh
 # Set VERSION in build.sh first. Builds dist/BeeHanBrightness-<version>.dmg, signs and notarizes it with Developer ID,
 # then publishes it as a GitHub release of the current commit, which must be pushed.
-# .github/workflows/release.yml runs it in two halves on every push to main:
+# .github/workflows/release.yml runs it in two halves on every push to main, and to a beta branch (<feature>-beta):
 #   ./release.sh build  the tests and the unsigned dist/dmg/BeeHan Brightness.app, on GitHub's Mac
 #   ./release.sh sign   Developer ID, the DMG, notarization and the release, on the self-hosted runner on z's Mac
 # With neither it does both, by hand. Both stop early when this version is already released.
@@ -20,6 +20,13 @@ if gh release view "v$VERSION" -R zolferfigueiredo/bhbrightness >/dev/null 2>&1;
   echo "v$VERSION is already released."
   exit 0
 fi
+# A version with a "-", 1.4.0-widgets-beta.1, is a beta: a pre-release, which GitHub never calls latest, so neither the
+# app's update check (unless it runs a beta) nor the website or the cask offer it. A beta branch publishes betas only.
+PRERELEASE=false
+case $VERSION in *-*) PRERELEASE=true ;; esac
+case "${GITHUB_REF_NAME:-}" in *-beta)
+  [ "$PRERELEASE" = true ] || { echo "$GITHUB_REF_NAME publishes betas only, and $VERSION isn't one."; exit 0; } ;;
+esac
 
 # The build half.
 if [ "$MODE" != sign ]; then
@@ -56,24 +63,8 @@ cat > "$APP/Contents/Info.plist" <<EOF
 </dict></plist>
 EOF
 # The DMG window's background lives inside the app, so the DMG shows nothing but the app and Applications.
-# Finder draws file names in black over a background picture, even in dark mode. They vanish on
-# pure black, so the faded icon must not reach them, and the picture carries the visible labels.
-# .AppleSystemUIFont is the only font name sips maps to SF.
-cat > dist/background.svg <<EOF
-<svg xmlns="http://www.w3.org/2000/svg" width="600" height="440">
-<rect width="600" height="440"/>
-<g opacity=".06">$(sed -e 's/<rect[^>]*>//' -e 's/width="128" height="128"/x="234" y="22" width="456" height="456"/' icon.svg)</g>
-<g fill="none" stroke="#86868b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-<path d="M236 166C266 124 330 120 362 152"/><path d="M349 151.5h13.5v-13.5"/>
-</g>
-<g font-family=".AppleSystemUIFont" font-size="16" fill="#f5f5f7" fill-opacity=".85" text-anchor="middle">
-<text x="170" y="250">$APPNAME.app</text><text x="430" y="250">Applications</text>
-</g>
-</svg>
-EOF
-for s in 1 2; do sips -s format png -z $((440 * s)) $((600 * s)) dist/background.svg --out "dist/bg$s.png" >/dev/null; done
-tiffutil -cathidpicheck dist/bg1.png dist/bg2.png -out "$APP/Contents/Resources/dmg-background.tiff"
-rm dist/background.svg dist/bg1.png dist/bg2.png
+swift Icon/make-dmg-background.swift "$WORK/bg"
+tiffutil -cathidpicheck "$WORK/bg/background.png" "$WORK/bg/background@2x.png" -out "$APP/Contents/Resources/dmg-background.tiff"
 fi
 
 # The sign half.
@@ -98,4 +89,4 @@ echo "Release ready: $DMG"
 }
 # The apps learn the newest version from releases/latest/download/latest.json, the same file the website serves.
 printf '{"version": "%s"}\n' "$VERSION" > dist/latest.json
-gh release create "v$VERSION" "$DMG" dist/latest.json -R zolferfigueiredo/bhbrightness --target "$(git rev-parse HEAD)" --title "$APPNAME $VERSION" --generate-notes
+gh release create "v$VERSION" "$DMG" dist/latest.json -R zolferfigueiredo/bhbrightness --target "$(git rev-parse HEAD)" --title "$APPNAME $VERSION" --generate-notes --prerelease="$PRERELEASE"

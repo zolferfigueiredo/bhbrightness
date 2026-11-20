@@ -1,7 +1,7 @@
 #!/bin/bash
 # Makes dmg/layout.DS_Store, the DMG window's layout that release.sh copies into every DMG: Finder lays out a test
 # DMG of dist/dmg and saves it. Run it after ./release.sh build when the background or the icon spots change; it opens
-# a Finder window for a moment. Icon positions must match the arrow and labels in release.sh.
+# a Finder window for a moment. Icon positions must match Icon/make-dmg-background.swift.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 [ -d "dist/dmg/BeeHan Brightness.app" ] || { echo "dist/dmg/BeeHan Brightness.app is missing: run ./release.sh build first." >&2; exit 1; }
@@ -27,14 +27,15 @@ tell application "Finder" to tell disk "BeeHan Brightness"
     set current view of container window to icon view
     set toolbar visible of container window to false
     set statusbar visible of container window to false
-    set bounds of container window to {200, 120, 800, 552}
+    set bounds of container window to {200, 120, 840, 520}
     set opts to icon view options of container window
     set arrangement of opts to not arranged
-    set icon size of opts to 100
-    set text size of opts to 10
+    set icon size of opts to 128
+    set text size of opts to 13
     set background picture of opts to file "BeeHan Brightness.app:Contents:Resources:dmg-background.tiff"
-    set position of item "BeeHan Brightness.app" to {170, 160}
-    set position of item "Applications" to {430, 160}
+    set position of item "BeeHan Brightness.app" to {160, 190}
+    set position of item "Applications" to {480, 190}
+    update without registering applications
     close
 end tell
 EOF

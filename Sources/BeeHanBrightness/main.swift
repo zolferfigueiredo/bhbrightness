@@ -12,6 +12,8 @@ defaults.register(defaults: ["updateEvery": 604800])
 let updates = Timer(timeInterval: 3600, target: app, selector: #selector(NSApplication.autoCheck), userInfo: nil, repeats: true)
 updates.tolerance = 600
 RunLoop.main.add(updates, forMode: .common)
+// Back on a release, About's beta switch is forgotten, so the next beta starts with it on.
+if !isBeta(appVersion) { defaults.removeObject(forKey: "checkBetas") }
 app.autoCheck()
 
 NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: nil) { _ in
