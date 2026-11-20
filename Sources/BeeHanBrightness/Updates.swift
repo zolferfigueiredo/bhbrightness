@@ -1,7 +1,23 @@
 import Foundation
 
+// A version with a "-" is a beta of the version before it: 1.4.0-widgets-beta.1, then 1.4.0-widgets-beta.2, then 1.4.0.
+func isBeta(_ version: String) -> Bool { version.contains("-") }
+// Numeric, and past a "-" a beta, older than its release.
 func isNewer(_ remote: String, than local: String) -> Bool {
-    remote.compare(local, options: .numeric) == .orderedDescending
+    let r = remote.split(separator: "-", maxSplits: 1, omittingEmptySubsequences: false)
+    let l = local.split(separator: "-", maxSplits: 1, omittingEmptySubsequences: false)
+    let order = r[0].compare(l[0], options: .numeric)
+    if order != .orderedSame { return order == .orderedDescending }
+    switch (r.count, l.count) {
+    case (1, 2): return true
+    case (2, 2): return r[1].compare(l[1], options: .numeric) == .orderedDescending
+    default: return false
+    }
+}
+// The newest version in GitHub's list of releases, its betas among them: tag v1.4.0-widgets-beta.3 is 1.4.0-widgets-beta.3.
+func newestVersion(inReleases data: Data) -> String? {
+    guard let list = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return nil }
+    return list.compactMap { ($0["tag_name"] as? String).map { String($0.dropFirst()) } }.max { isNewer($1, than: $0) }
 }
 
 // "1.1.4" gives "1.1.5": the version the test notification offers, so it reads like a real one.
@@ -33,13 +49,21 @@ func dmgURL(_ version: String) -> URL {
         ?? releases.appending(path: "download/v\(version)/BeeHanBrightness-\(version).dmg")
 }
 
-// The version in the newest release's latest.json, or nil when it can't be reached. Drafts and pre-releases never count as latest.
+// A beta looks for newer betas too, unless About's "Check for beta releases" is off. A release never does.
+var checksBetas: Bool {
+    isBeta(appVersion) && (defaults.object(forKey: "checkBetas") as? Bool ?? true)
+}
+// The version in the newest release's latest.json, or nil when it can't be reached. Drafts and pre-releases never count
+// as latest, so a beta that looks for betas reads the list of releases instead, to find the next beta as well as the release.
 func latestVersion() async -> String? {
-    let url = (testSite ?? releases.appending(path: "latest/download")).appending(path: "latest.json")
+    let betas = checksBetas && testSite == nil
+    let url = betas ? URL(string: "https://api.github.com/repos/zolferfigueiredo/bhbrightness/releases")!
+        : (testSite ?? releases.appending(path: "latest/download")).appending(path: "latest.json")
     let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 15)
     guard let (data, response) = try? await URLSession.shared.data(for: request),
-          (response as? HTTPURLResponse)?.statusCode == 200,
-          let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+          (response as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+    if betas { return newestVersion(inReleases: data) }
+    guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
     return json["version"] as? String
 }
 
