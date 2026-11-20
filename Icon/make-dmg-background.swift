@@ -1,8 +1,8 @@
-// DMG window background: the icon's graphite, with a curved arrow from the app (left) to the Applications link
-// (right). Positions must match dmg/layout.sh. release.sh runs this: swift Icon/make-dmg-background.swift <output folder>
-import CoreGraphics
+// DMG window background, as the DMG has always looked: black, the icon's figure faint on the right, and a thin grey
+// arrow from the app (left) to the Applications link (right). Positions must match dmg/layout.sh.
+// release.sh runs this from the repo root: swift Icon/make-dmg-background.swift <output folder>
+import AppKit
 import CoreText
-import Foundation
 import ImageIO
 import UniformTypeIdentifiers
 
@@ -13,19 +13,10 @@ func rgb(_ r: CGFloat, _ g: CGFloat, _ b: CGFloat, _ a: CGFloat = 1) -> CGColor 
     CGColor(colorSpace: srgb, components: [r / 255, g / 255, b / 255, a])!
 }
 
-func gradient(_ stops: [(CGColor, CGFloat)]) -> CGGradient {
-    CGGradient(colorsSpace: srgb, colors: stops.map(\.0) as CFArray, locations: stops.map(\.1))!
-}
-
-// A soft glow: `color` at (x, y), fading out by `stop` of an ellipse rx by ry, all as fractions of the window.
-func radial(_ ctx: CGContext, _ color: CGColor, rx: CGFloat, ry: CGFloat, x: CGFloat, y: CGFloat, stop: CGFloat) {
-    ctx.saveGState()
-    ctx.translateBy(x: x * width, y: y * height)
-    ctx.scaleBy(x: rx * width, y: ry * height)
-    ctx.drawRadialGradient(gradient([(color, 0), (color.copy(alpha: 0)!, stop)]),
-                           startCenter: .zero, startRadius: 0, endCenter: .zero, endRadius: 1, options: [])
-    ctx.restoreGState()
-}
+// icon.svg without its plate: only the figure.
+let svg = try String(contentsOfFile: "icon.svg", encoding: .utf8)
+    .replacingOccurrences(of: "<rect[^>]*>", with: "", options: .regularExpression)
+let figure = NSImage(data: Data(svg.utf8))!
 
 func draw(scale: CGFloat) -> CGImage {
     let ctx = CGContext(data: nil, width: Int(width * scale), height: Int(height * scale), bitsPerComponent: 8,
@@ -34,11 +25,14 @@ func draw(scale: CGFloat) -> CGImage {
     ctx.translateBy(x: 0, y: height * scale)
     ctx.scaleBy(x: scale, y: -scale)
 
-    ctx.drawLinearGradient(gradient([(rgb(72, 72, 74), 0), (rgb(44, 44, 46), 0.45), (rgb(18, 18, 20), 1)]),
-                           start: CGPoint(x: 0, y: 0), end: CGPoint(x: width * 0.3, y: height), options: [.drawsAfterEndLocation])
-    radial(ctx, rgb(0, 0, 0, 0.6), rx: 0.7, ry: 0.6, x: 0.96, y: 1, stop: 0.7)
-    radial(ctx, rgb(255, 255, 255, 0.12), rx: 0.5, ry: 0.6, x: 0.25, y: 0.45, stop: 0.7)
-    radial(ctx, rgb(255, 255, 255, 0.08), rx: 0.4, ry: 0.5, x: 0.75, y: 0.45, stop: 0.7)
+    ctx.setFillColor(rgb(0, 0, 0))
+    ctx.fill(CGRect(x: 0, y: 0, width: width, height: height))
+    // The figure at 6%, running off the right and bottom edges.
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = NSGraphicsContext(cgContext: ctx, flipped: true)
+    figure.draw(in: NSRect(x: 250, y: 20, width: 486, height: 486), from: .zero, operation: .sourceOver, fraction: 0.06,
+                respectFlipped: true, hints: nil)
+    NSGraphicsContext.restoreGraphicsState()
 
     // Finder draws the icons' names in black even in Dark Mode, so each sits on a light box, as in Firefox's DMG.
     // Finder puts a 13 pt name from 268 to 280 pt, centred under its icon. Both boxes take the longer name's width.
@@ -48,23 +42,18 @@ func draw(scale: CGFloat) -> CGImage {
             NSAttributedString(string: name, attributes: [NSAttributedString.Key(kCTFontAttributeName as String): font])), nil, nil, nil)
     }.max()!
     let boxWidth = max(120, widest + 28)
-    ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: 1), blur: 4, color: rgb(0, 0, 0, 0.35))
     ctx.setFillColor(rgb(242, 242, 247, 0.92))
     for x: CGFloat in [160, 480] {
         ctx.addPath(CGPath(roundedRect: CGRect(x: x - boxWidth / 2, y: 262, width: boxWidth, height: 24),
                            cornerWidth: 7, cornerHeight: 7, transform: nil))
     }
     ctx.fillPath()
-    ctx.restoreGState()
 
-    // Curved arrow over the gap between the two 128 pt icons centred at (160, 190) and (480, 190).
+    // Thin curved arrow over the gap between the two 128 pt icons centred at (160, 190) and (480, 190).
     let from = CGPoint(x: 236, y: 176), control = CGPoint(x: 320, y: 92), to = CGPoint(x: 402, y: 172)
-    let angle = atan2(to.y - control.y, to.x - control.x), head: CGFloat = 20, spread: CGFloat = 0.5
-    ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: 3), blur: 8, color: rgb(0, 0, 0, 0.5))
-    ctx.setStrokeColor(rgb(245, 245, 247, 0.95))
-    ctx.setLineWidth(6)
+    let angle = atan2(to.y - control.y, to.x - control.x), head: CGFloat = 14, spread = CGFloat.pi / 4
+    ctx.setStrokeColor(rgb(134, 134, 139))
+    ctx.setLineWidth(3)
     ctx.setLineCap(.round)
     ctx.setLineJoin(.round)
     ctx.move(to: from)
@@ -73,7 +62,6 @@ func draw(scale: CGFloat) -> CGImage {
     ctx.addLine(to: to)
     ctx.addLine(to: CGPoint(x: to.x - head * cos(angle + spread), y: to.y - head * sin(angle + spread)))
     ctx.strokePath()
-    ctx.restoreGState()
 
     return ctx.makeImage()!
 }
