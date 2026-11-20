@@ -56,24 +56,8 @@ cat > "$APP/Contents/Info.plist" <<EOF
 </dict></plist>
 EOF
 # The DMG window's background lives inside the app, so the DMG shows nothing but the app and Applications.
-# Finder draws file names in black over a background picture, even in dark mode. They vanish on
-# pure black, so the faded icon must not reach them, and the picture carries the visible labels.
-# .AppleSystemUIFont is the only font name sips maps to SF.
-cat > dist/background.svg <<EOF
-<svg xmlns="http://www.w3.org/2000/svg" width="600" height="440">
-<rect width="600" height="440"/>
-<g opacity=".06">$(sed -e 's/<rect[^>]*>//' -e 's/width="128" height="128"/x="234" y="22" width="456" height="456"/' icon.svg)</g>
-<g fill="none" stroke="#86868b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-<path d="M236 166C266 124 330 120 362 152"/><path d="M349 151.5h13.5v-13.5"/>
-</g>
-<g font-family=".AppleSystemUIFont" font-size="16" fill="#f5f5f7" fill-opacity=".85" text-anchor="middle">
-<text x="170" y="250">$APPNAME.app</text><text x="430" y="250">Applications</text>
-</g>
-</svg>
-EOF
-for s in 1 2; do sips -s format png -z $((440 * s)) $((600 * s)) dist/background.svg --out "dist/bg$s.png" >/dev/null; done
-tiffutil -cathidpicheck dist/bg1.png dist/bg2.png -out "$APP/Contents/Resources/dmg-background.tiff"
-rm dist/background.svg dist/bg1.png dist/bg2.png
+swift Icon/make-dmg-background.swift "$WORK/bg"
+tiffutil -cathidpicheck "$WORK/bg/background.png" "$WORK/bg/background@2x.png" -out "$APP/Contents/Resources/dmg-background.tiff"
 fi
 
 # The sign half.

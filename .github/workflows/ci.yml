@@ -26,7 +26,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           base=origin/${{ github.base_ref }}
-          if git diff --quiet "$base"...HEAD -- Sources Package.swift icon.svg; then echo "The app is unchanged."; exit 0; fi
+          if git diff --quiet "$base"...HEAD -- Sources Package.swift icon.svg Icon; then echo "The app is unchanged."; exit 0; fi
           version() { git show "$1:build.sh" | sed -n 's/^VERSION=//p'; }
           old=$(version "$base") new=$(version HEAD)
           if [ "$new" = "$old" ] || [ "$(printf '%s\n%s\n' "$old" "$new" | sort -V | tail -n 1)" != "$new" ]; then
