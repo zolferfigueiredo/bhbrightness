@@ -1,5 +1,5 @@
-// DMG window background, as the DMG has always looked: black, the icon's figure faint on the right, and a thin grey
-// arrow from the app (left) to the Applications link (right). Positions must match dmg/layout.sh.
+// DMG window background, as the DMG has always looked: black, the icon's figure faint on the right, and a white arrow
+// from the app (left) to the Applications link (right), as in the other apps. Positions must match dmg/layout.sh.
 // release.sh runs this from the repo root: swift Icon/make-dmg-background.swift <output folder>
 import AppKit
 import CoreText
@@ -49,11 +49,13 @@ func draw(scale: CGFloat) -> CGImage {
     }
     ctx.fillPath()
 
-    // Thin curved arrow over the gap between the two 128 pt icons centred at (160, 190) and (480, 190).
+    // Curved arrow over the gap between the two 128 pt icons centred at (160, 190) and (480, 190).
     let from = CGPoint(x: 236, y: 176), control = CGPoint(x: 320, y: 92), to = CGPoint(x: 402, y: 172)
-    let angle = atan2(to.y - control.y, to.x - control.x), head: CGFloat = 14, spread = CGFloat.pi / 4
-    ctx.setStrokeColor(rgb(134, 134, 139))
-    ctx.setLineWidth(3)
+    let angle = atan2(to.y - control.y, to.x - control.x), head: CGFloat = 20, spread: CGFloat = 0.5
+    ctx.saveGState()
+    ctx.setShadow(offset: CGSize(width: 0, height: 3), blur: 8, color: rgb(0, 0, 0, 0.5))
+    ctx.setStrokeColor(rgb(255, 255, 255, 0.95))
+    ctx.setLineWidth(6)
     ctx.setLineCap(.round)
     ctx.setLineJoin(.round)
     ctx.move(to: from)
@@ -62,6 +64,7 @@ func draw(scale: CGFloat) -> CGImage {
     ctx.addLine(to: to)
     ctx.addLine(to: CGPoint(x: to.x - head * cos(angle + spread), y: to.y - head * sin(angle + spread)))
     ctx.strokePath()
+    ctx.restoreGState()
 
     return ctx.makeImage()!
 }
